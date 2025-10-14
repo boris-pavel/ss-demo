@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500",
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500",
       "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=500",
-      "https://images.unsplash.com/photo-1598300053656-9b47b1afdbd6?w=500"
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500"
     ];
 
     demoPhotos.forEach((url) => {
