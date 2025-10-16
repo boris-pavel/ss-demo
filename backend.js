@@ -1,7 +1,10 @@
 import express from "express";
 import fetch from "node-fetch";
+import cors from "cors";
+
 
 const app = express();
+app.use(cors());
 const PORT = 3000;
 
 // replace with your credentials (keep them secret here)
