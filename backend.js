@@ -38,4 +38,31 @@ app.get("/calendar", async (req, res) => {
   res.json(calendar);
 });
 
+
+app.get("/reviews", async (req, res) => {
+  const { listingId } = req.query;
+
+  // 1. Get an access token
+  const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: process.env.HOSTAWAY_ACCOUNT_ID,
+      client_secret: process.env.HOSTAWAY_SECRET,
+      scope: "general",
+    }),
+  });
+  const { access_token } = await tokenRes.json();
+
+  // 2. Get reviews
+  const revRes = await fetch(
+    `https://api.hostaway.com/v1/reviews?listingId=${listingId}&limit=10`,
+    { headers: { Authorization: `Bearer ${access_token}` } }
+  );
+  const reviews = await revRes.json();
+  res.json(reviews);
+});
+
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
