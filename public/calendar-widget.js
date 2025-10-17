@@ -25,55 +25,55 @@
   }
 
   function renderCalendar() {
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0);
-    const startWeekday = firstDay.getDay();
-    const totalDays = lastDay.getDate();
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  const startWeekday = firstDay.getDay();
+  const totalDays = lastDay.getDate();
 
-    title.textContent = `${firstDay.toLocaleString("default", { month: "long" })} ${currentYear}`;
+  title.textContent = `${firstDay.toLocaleString("default", { month: "long" })} ${currentYear}`;
 
-    let daysHTML = "";
-    const today = new Date().toISOString().split("T")[0];
+  let daysHTML = "";
+  const today = new Date().toISOString().split("T")[0];
 
-    // pad before first day
-    for (let i = 0; i < startWeekday; i++) {
-      daysHTML += `<div class="h-10"></div>`;
-    }
-
-    for (let d = 1; d <= totalDays; d++) {
-      const dateObj = new Date(currentYear, currentMonth, d);
-      const dateStr = dateObj.toISOString().split("T")[0];
-      const available = availabilityData[dateStr] ? availabilityData[dateStr].available : true;
-      const isPast = dateObj < new Date(today);
-      const selected =
-        (window.selectedStart && window.selectedStart === dateStr) ||
-        (window.selectedEnd && window.selectedEnd === dateStr) ||
-        (window.selectedStart &&
-          window.selectedEnd &&
-          dateStr > window.selectedStart &&
-          dateStr < window.selectedEnd);
-
-      const cls = [
-        "day",
-        "flex items-center justify-center rounded-md text-sm cursor-pointer select-none",
-        "transition",
-        isPast ? "text-gray-300 cursor-not-allowed" : "",
-        available ? "bg-green-50 hover:bg-green-100" : "bg-red-50 text-red-500 cursor-not-allowed",
-        selected ? "bg-blue-600 text-white" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-
-      daysHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
-    }
-
-    container.innerHTML = `
-      <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-2 font-medium">
-        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-      </div>
-      <div class="grid grid-cols-7 gap-1">${daysHTML}</div>
-    `;
+  // pad before first day
+  for (let i = 0; i < startWeekday; i++) {
+    daysHTML += `<div class="day empty"></div>`;
   }
+
+  for (let d = 1; d <= totalDays; d++) {
+    const dateObj = new Date(currentYear, currentMonth, d);
+    const dateStr = dateObj.toISOString().split("T")[0];
+    const available = availabilityData[dateStr] ? availabilityData[dateStr].available : true;
+    const isPast = dateObj < new Date(today);
+    const isSelected =
+      (window.selectedStart && window.selectedStart === dateStr) ||
+      (window.selectedEnd && window.selectedEnd === dateStr) ||
+      (window.selectedStart &&
+        window.selectedEnd &&
+        dateStr > window.selectedStart &&
+        dateStr < window.selectedEnd);
+
+    const cls = [
+      "day",
+      "flex items-center justify-center w-10 h-10 md:w-11 md:h-11 rounded-md text-sm cursor-pointer select-none",
+      "transition-all duration-150",
+      isPast ? "text-gray-300 cursor-not-allowed" : "",
+      available ? "bg-green-50 hover:bg-green-100" : "bg-red-50 text-red-500 cursor-not-allowed",
+      isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    daysHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+  }
+
+  container.innerHTML = `
+    <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-2 font-medium">
+      <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+    </div>
+    <div class="grid grid-cols-7 gap-1 justify-items-center">${daysHTML}</div>
+  `;
+}
 
   function changeMonth(delta) {
     currentMonth += delta;
