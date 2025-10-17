@@ -1,6 +1,6 @@
 (async function () {
-  const LISTING_ID = window.LISTING_ID || "330548";
-  const CALENDAR_URL = `https://living-water-backend.onrender.com/calendar?listingId=${LISTING_ID}`;
+  const LISTING_ID = window.LISTING_ID || "97521";
+  const AVAILABILITY_URL = `https://living-water-backend.onrender.com/availability?listingId=${LISTING_ID}`;
 
   const container = document.getElementById("calendar-container");
   const title = document.getElementById("calendar-title");
@@ -14,22 +14,23 @@
 
   async function loadAvailability() {
     try {
-      const res = await fetch(CALENDAR_URL);
+      const res = await fetch(AVAILABILITY_URL);
       const data = await res.json();
+
+      // Hostaway returns results like data.result or data.calendar
       availabilityData = data.result || data.calendar || {};
       renderTwoMonths();
     } catch (err) {
-      console.error("Error loading calendar:", err);
+      console.error("Error loading availability:", err);
       container.innerHTML = `<p class="text-red-500 text-sm text-center">Error loading availability</p>`;
     }
   }
 
-  // Renders both months side by side
   function renderTwoMonths() {
-    const month1 = renderSingleMonth(currentYear, currentMonth);
+    const month1 = renderMonth(currentYear, currentMonth);
     const nextMonth = (currentMonth + 1) % 12;
     const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-    const month2 = renderSingleMonth(nextYear, nextMonth);
+    const month2 = renderMonth(nextYear, nextMonth);
 
     title.textContent = `${new Date(
       currentYear,
@@ -40,15 +41,14 @@
     ).toLocaleString("default", { month: "long", year: "numeric" })}`;
 
     container.innerHTML = `
-      <div class="grid md:grid-cols-2 gap-6 w-full justify-center">
+      <div class="grid md:grid-cols-2 gap-8 w-full justify-center items-start">
         ${month1}
         ${month2}
       </div>
     `;
   }
 
-  // Generate one month calendar HTML
-  function renderSingleMonth(year, month) {
+  function renderMonth(year, month) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startWeekday = firstDay.getDay();
@@ -62,16 +62,13 @@
     let daysHTML = "";
 
     // pad before first day
-    for (let i = 0; i < startWeekday; i++) {
-      daysHTML += `<div class="day empty"></div>`;
-    }
+    for (let i = 0; i < startWeekday; i++) daysHTML += `<div class="day empty"></div>`;
 
     for (let d = 1; d <= totalDays; d++) {
       const dateObj = new Date(year, month, d);
       const dateStr = dateObj.toISOString().split("T")[0];
-      const available = availabilityData[dateStr]
-        ? availabilityData[dateStr].available
-        : true;
+      const dayData = availabilityData[dateStr];
+      const available = dayData ? dayData.available !== false : true;
       const isPast = dateObj < new Date(today);
       const selected =
         (window.selectedStart && window.selectedStart === dateStr) ||
@@ -83,11 +80,11 @@
 
       const cls = [
         "day",
-        "flex items-center justify-center w-10 h-10 md:w-11 md:h-11 rounded-md text-sm cursor-pointer select-none transition-all duration-150",
+        "flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-md text-sm cursor-pointer select-none transition-all duration-150",
         isPast ? "text-gray-300 cursor-not-allowed" : "",
         available
           ? "bg-green-50 hover:bg-green-100"
-          : "bg-red-50 text-red-500 cursor-not-allowed",
+          : "bg-red-100 text-red-600 cursor-not-allowed",
         selected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
       ]
         .filter(Boolean)
@@ -97,7 +94,7 @@
     }
 
     return `
-      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow p-5 min-w-[270px] md:min-w-[320px]">
         <div class="text-center font-semibold text-gray-800 mb-2">${monthLabel}</div>
         <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-1 font-medium">
           <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
@@ -119,7 +116,6 @@
     renderTwoMonths();
   }
 
-  // date selection
   container.addEventListener("click", (e) => {
     const dayEl = e.target.closest(".day");
     if (!dayEl || dayEl.classList.contains("cursor-not-allowed")) return;
@@ -155,7 +151,6 @@
       }
     });
 
-    // update label on booking card
     if (window._booking) {
       window._booking.setDatesLabel(window.selectedStart, window.selectedEnd);
     }
