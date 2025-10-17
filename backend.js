@@ -40,7 +40,7 @@ app.get("/availability", async (req, res) => {
     const startDate = today.toISOString().split("T")[0];
     const endDate = end.toISOString().split("T")[0];
 
-    // 3️⃣ Try standard calendar endpoint first
+    // 3️⃣ Try both endpoints
     let result = {};
     let apiRes = await fetch(
       `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`,
@@ -48,7 +48,7 @@ app.get("/availability", async (req, res) => {
     );
     let data = await apiRes.json();
 
-    // if empty, fallback to /availabilityCalendar
+    // if empty, fallback to availabilityCalendar
     if (!data.result?.calendar?.length) {
       const altRes = await fetch(
         `https://api.hostaway.com/v1/availabilityCalendar?listingId=${listingId}&startDate=${startDate}&endDate=${endDate}`,
@@ -57,19 +57,21 @@ app.get("/availability", async (req, res) => {
       data = await altRes.json();
     }
 
-    // normalize data
+    // 4️⃣ Normalize result (convert numeric availability)
     const days = data.result?.calendar || data.result?.days || [];
     days.forEach((day) => {
+      const available =
+        day.available === 1 || day.available === true || day.available === "1";
       result[day.date] = {
-        available: day.available,
+        available,
         price: day.price,
       };
     });
 
     res.json({ result });
-  } catch (e) {
-    console.error("Error fetching availability:", e);
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Error fetching availability:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
