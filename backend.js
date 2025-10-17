@@ -163,11 +163,13 @@ app.get("/listings-debug", async (req, res) => {
   }
 });
 
+// GET /amenities?listingId=97521
 app.get("/amenities", async (req, res) => {
   try {
     const { listingId } = req.query;
     if (!listingId) return res.status(400).json({ error: "listingId required" });
 
+    // 1️⃣ Reuse the same Hostaway auth flow
     const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -175,22 +177,33 @@ app.get("/amenities", async (req, res) => {
         grant_type: "client_credentials",
         client_id: process.env.HOSTAWAY_ACCOUNT_ID,
         client_secret: process.env.HOSTAWAY_SECRET,
-        scope: "general"
+        scope: "general",
       }),
     });
 
-    const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token;
-    if (!accessToken) throw new Error("Failed to get access token");
+    const { access_token } = await tokenRes.json();
 
-    const apiUrl = `https://api.hostaway.com/v1/listings/${listingId}`;
-    const apiRes = await fetch(apiUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await apiRes.json();
+    // 2️⃣ Fetch all listings (like your /listings-debug endpoint)
+    const listRes = await fetch(
+      "https://api.hostaway.com/v1/listings?limit=200",
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    );
 
-    // Correct field: listingAmenities
-    const amenities = data.result?.listingAmenities?.map(a => a.amenityName) || [];
+    const data = await listRes.json();
+    const listings = data.result || [];
+
+    // 3️⃣ Find the specific listing
+    const listing = listings.find(
+      (l) => String(l.id) === String(listingId)
+    );
+
+    if (!listing) {
+      return res.status(404).json({ error: "Listing not found" });
+    }
+
+    // 4️⃣ Extract amenities correctly
+    const amenities =
+      listing.listingAmenities?.map((a) => a.amenityName) || [];
 
     res.json({ amenities });
   } catch (err) {
@@ -198,6 +211,7 @@ app.get("/amenities", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
