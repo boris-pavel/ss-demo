@@ -12,32 +12,49 @@ const PORT = 3000;
 const CLIENT_ID = process.env.HOSTAWAY_ACCOUNT_ID;
 const CLIENT_SECRET = process.env.HOSTAWAY_SECRET;
 
-app.get("/calendar", async (req, res) => {
-  const { listingId, startDate, endDate } = req.query;
+app.get("/availability", async (req, res) => {
+  try {
+    const { listingId } = req.query;
+    if (!listingId) return res.status(400).json({ error: "listingId required" });
 
-  // get access token
-  const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      scope: "general",
-    }),
-  });
+    // Get access token
+    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: process.env.HOSTAWAY_ACCOUNT_ID,
+        client_secret: process.env.HOSTAWAY_SECRET,
+        scope: "general",
+      }),
+    });
+    const { access_token } = await tokenRes.json();
 
-  const { access_token } = await tokenRes.json();
+    //  Fetch availability from Hostaway API
+    const today = new Date();
+    const end = new Date();
+    end.setMonth(end.getMonth() + 3); // fetch 3 months ahead
+    const url = `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${today
+      .toISOString()
+      .split("T")[0]}&endDate=${end.toISOString().split("T")[0]}`;
 
-  // fetch calendar data
-  const calRes = await fetch(
-    `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`,
-    { headers: { Authorization: `Bearer ${access_token}` } }
-  );
+    const apiRes = await fetch(url, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const json = await apiRes.json();
 
-  const calendar = await calRes.json();
-  res.json(calendar);
+    const result = {};
+    json.result?.calendar?.forEach((day) => {
+      result[day.date] = { available: day.available };
+    });
+
+    res.json({ result });
+  } catch (e) {
+    console.error("Error fetching availability:", e);
+    res.status(500).json({ error: e.message });
+  }
 });
+
 
 
 app.get("/reviews", async (req, res) => {
