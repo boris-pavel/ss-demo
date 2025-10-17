@@ -1,5 +1,5 @@
 (async function () {
-  const LISTING_ID = window.LISTING_ID || "97521";
+  const LISTING_ID = window.LISTING_ID || "330548";
   const CALENDAR_URL = `https://living-water-backend.onrender.com/calendar?listingId=${LISTING_ID}`;
 
   const container = document.getElementById("calendar-container");
@@ -17,63 +17,95 @@
       const res = await fetch(CALENDAR_URL);
       const data = await res.json();
       availabilityData = data.result || data.calendar || {};
-      renderCalendar();
+      renderTwoMonths();
     } catch (err) {
       console.error("Error loading calendar:", err);
       container.innerHTML = `<p class="text-red-500 text-sm text-center">Error loading availability</p>`;
     }
   }
 
-  function renderCalendar() {
-  const firstDay = new Date(currentYear, currentMonth, 1);
-  const lastDay = new Date(currentYear, currentMonth + 1, 0);
-  const startWeekday = firstDay.getDay();
-  const totalDays = lastDay.getDate();
+  // Renders both months side by side
+  function renderTwoMonths() {
+    const month1 = renderSingleMonth(currentYear, currentMonth);
+    const nextMonth = (currentMonth + 1) % 12;
+    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+    const month2 = renderSingleMonth(nextYear, nextMonth);
 
-  title.textContent = `${firstDay.toLocaleString("default", { month: "long" })} ${currentYear}`;
+    title.textContent = `${new Date(
+      currentYear,
+      currentMonth
+    ).toLocaleString("default", { month: "long", year: "numeric" })} & ${new Date(
+      nextYear,
+      nextMonth
+    ).toLocaleString("default", { month: "long", year: "numeric" })}`;
 
-  let daysHTML = "";
-  const today = new Date().toISOString().split("T")[0];
-
-  // pad before first day
-  for (let i = 0; i < startWeekday; i++) {
-    daysHTML += `<div class="day empty"></div>`;
+    container.innerHTML = `
+      <div class="grid md:grid-cols-2 gap-6 w-full justify-center">
+        ${month1}
+        ${month2}
+      </div>
+    `;
   }
 
-  for (let d = 1; d <= totalDays; d++) {
-    const dateObj = new Date(currentYear, currentMonth, d);
-    const dateStr = dateObj.toISOString().split("T")[0];
-    const available = availabilityData[dateStr] ? availabilityData[dateStr].available : true;
-    const isPast = dateObj < new Date(today);
-    const isSelected =
-      (window.selectedStart && window.selectedStart === dateStr) ||
-      (window.selectedEnd && window.selectedEnd === dateStr) ||
-      (window.selectedStart &&
-        window.selectedEnd &&
-        dateStr > window.selectedStart &&
-        dateStr < window.selectedEnd);
+  // Generate one month calendar HTML
+  function renderSingleMonth(year, month) {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startWeekday = firstDay.getDay();
+    const totalDays = lastDay.getDate();
 
-    const cls = [
-      "day",
-      "flex items-center justify-center w-10 h-10 md:w-11 md:h-11 rounded-md text-sm cursor-pointer select-none",
-      "transition-all duration-150",
-      isPast ? "text-gray-300 cursor-not-allowed" : "",
-      available ? "bg-green-50 hover:bg-green-100" : "bg-red-50 text-red-500 cursor-not-allowed",
-      isSelected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const monthLabel = `${firstDay.toLocaleString("default", {
+      month: "long",
+    })} ${year}`;
 
-    daysHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+    const today = new Date().toISOString().split("T")[0];
+    let daysHTML = "";
+
+    // pad before first day
+    for (let i = 0; i < startWeekday; i++) {
+      daysHTML += `<div class="day empty"></div>`;
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dateObj = new Date(year, month, d);
+      const dateStr = dateObj.toISOString().split("T")[0];
+      const available = availabilityData[dateStr]
+        ? availabilityData[dateStr].available
+        : true;
+      const isPast = dateObj < new Date(today);
+      const selected =
+        (window.selectedStart && window.selectedStart === dateStr) ||
+        (window.selectedEnd && window.selectedEnd === dateStr) ||
+        (window.selectedStart &&
+          window.selectedEnd &&
+          dateStr > window.selectedStart &&
+          dateStr < window.selectedEnd);
+
+      const cls = [
+        "day",
+        "flex items-center justify-center w-10 h-10 md:w-11 md:h-11 rounded-md text-sm cursor-pointer select-none transition-all duration-150",
+        isPast ? "text-gray-300 cursor-not-allowed" : "",
+        available
+          ? "bg-green-50 hover:bg-green-100"
+          : "bg-red-50 text-red-500 cursor-not-allowed",
+        selected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      daysHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+    }
+
+    return `
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+        <div class="text-center font-semibold text-gray-800 mb-2">${monthLabel}</div>
+        <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-1 font-medium">
+          <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+        </div>
+        <div class="grid grid-cols-7 gap-1 justify-items-center">${daysHTML}</div>
+      </div>
+    `;
   }
-
-  container.innerHTML = `
-    <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-2 font-medium">
-      <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
-    </div>
-    <div class="grid grid-cols-7 gap-1 justify-items-center">${daysHTML}</div>
-  `;
-}
 
   function changeMonth(delta) {
     currentMonth += delta;
@@ -84,16 +116,15 @@
       currentMonth = 0;
       currentYear++;
     }
-    renderCalendar();
+    renderTwoMonths();
   }
 
-  // click events
+  // date selection
   container.addEventListener("click", (e) => {
     const dayEl = e.target.closest(".day");
     if (!dayEl || dayEl.classList.contains("cursor-not-allowed")) return;
     const date = dayEl.dataset.date;
 
-    // selection logic
     if (!window.selectedStart || (window.selectedStart && window.selectedEnd)) {
       window.selectedStart = date;
       window.selectedEnd = null;
@@ -108,17 +139,21 @@
       }
     }
 
-    renderCalendar();
+    renderTwoMonths();
 
     // highlight range
-    if (window.selectedStart && window.selectedEnd) {
-      const allDays = container.querySelectorAll(".day");
-      allDays.forEach((d) => {
-        const dStr = d.dataset.date;
-        if (dStr >= window.selectedStart && dStr <= window.selectedEnd)
-          d.classList.add("bg-blue-100");
-      });
-    }
+    const allDays = container.querySelectorAll(".day");
+    allDays.forEach((d) => {
+      const dStr = d.dataset.date;
+      if (
+        window.selectedStart &&
+        window.selectedEnd &&
+        dStr >= window.selectedStart &&
+        dStr <= window.selectedEnd
+      ) {
+        d.classList.add("bg-blue-100");
+      }
+    });
 
     // update label on booking card
     if (window._booking) {
@@ -126,8 +161,12 @@
     }
   });
 
-  document.getElementById("prev-month")?.addEventListener("click", () => changeMonth(-1));
-  document.getElementById("next-month")?.addEventListener("click", () => changeMonth(1));
+  document
+    .getElementById("prev-month")
+    ?.addEventListener("click", () => changeMonth(-1));
+  document
+    .getElementById("next-month")
+    ?.addEventListener("click", () => changeMonth(1));
 
   await loadAvailability();
 })();
