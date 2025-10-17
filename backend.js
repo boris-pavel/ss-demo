@@ -40,33 +40,23 @@ app.get("/availability", async (req, res) => {
     const startDate = today.toISOString().split("T")[0];
     const endDate = end.toISOString().split("T")[0];
 
-    // 3️⃣ Try both endpoints
-    let result = {};
-    let apiRes = await fetch(
-      `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    let data = await apiRes.json();
-
-    // if empty, fallback to availabilityCalendar
-    if (!data.result?.calendar?.length) {
-      const altRes = await fetch(
-        `https://api.hostaway.com/v1/availabilityCalendar?listingId=${listingId}&startDate=${startDate}&endDate=${endDate}`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      data = await altRes.json();
-    }
-
-    // 4️⃣ Normalize result (convert numeric availability)
-    const days = data.result?.calendar || data.result?.days || [];
-    days.forEach((day) => {
-      const available =
-        day.available === 1 || day.available === true || day.available === "1";
-      result[day.date] = {
-        available,
-        price: day.price,
-      };
+    // 3️⃣ Request calendar data
+    const apiUrl = `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`;
+    const apiRes = await fetch(apiUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
+    const data = await apiRes.json();
+
+    // 4️⃣ Normalize format
+    const result = {};
+    if (Array.isArray(data.result)) {
+      data.result.forEach((d) => {
+        result[d.date] = {
+          available: d.isAvailable === 1,
+          price: d.price || null,
+        };
+      });
+    }
 
     res.json({ result });
   } catch (err) {
@@ -74,6 +64,7 @@ app.get("/availability", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 app.get("/reviews", async (req, res) => {
