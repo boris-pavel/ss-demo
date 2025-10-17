@@ -68,33 +68,45 @@ app.get("/reviews", async (req, res) => {
 
 app.get("/photos", async (req, res) => {
   try {
-    const { id } = req.query; // optional filter by listing id
-    const data = await fetch("https://living-water-backend.onrender.com/listings-debug.json").then(r => r.json());
+    const { listingId } = req.query;
+    if (!listingId) return res.status(400).json({ error: "listingId is required" });
 
-    if (!data.result || !Array.isArray(data.result)) {
-      return res.status(400).json({ photos: [], error: "Invalid JSON format" });
-    }
+    // 1️⃣ Get access token
+    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: process.env.HOSTAWAY_ACCOUNT_ID,
+        client_secret: process.env.HOSTAWAY_SECRET,
+        scope: "general",
+      }),
+    });
+    const { access_token } = await tokenRes.json();
 
-    let listings = data.result;
-    if (id) listings = listings.filter(l => String(l.id) === String(id));
-
-    const photos = listings.flatMap(l =>
-      (l.listingImages || []).map(img => ({
-        url: img.url,
-        caption:
-          img.bookingEngineCaption ||
-          img.airbnbCaption ||
-          img.caption ||
-          "Photo",
-      }))
+    // 2️⃣ Get the listing details
+    const listingRes = await fetch(
+      `https://api.hostaway.com/v1/listings/${listingId}`,
+      { headers: { Authorization: `Bearer ${access_token}` } }
     );
+    const json = await listingRes.json();
+    const listing = json.result;
+
+    // 3️⃣ Extract photos from listingImages
+    const photos = (listing.listingImages || [])
+      .filter(img => img.url && img.url.startsWith("https"))
+      .map(img => ({
+        url: img.url,
+        caption: img.bookingEngineCaption || img.airbnbCaption || img.caption || "",
+      }));
 
     res.json({ photos });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching photos:", err);
     res.status(500).json({ photos: [], error: err.message });
   }
 });
+
 
 
 
