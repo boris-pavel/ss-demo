@@ -1,82 +1,133 @@
-async function loadHostawayCalendar() {
-  const BACKEND_URL = "https://living-water-backend.onrender.com/calendar";
-  const LISTING_ID = "97521"; // replace with your actual Hostaway listing ID
+(async function () {
+  const LISTING_ID = window.LISTING_ID || "330548";
+  const CALENDAR_URL = `https://living-water-backend.onrender.com/calendar?listingId=${LISTING_ID}`;
 
   const container = document.getElementById("calendar-container");
   const title = document.getElementById("calendar-title");
-  const now = new Date();
-  let currentYear = now.getFullYear();
-  let currentMonth = now.getMonth();
+  if (!container || !title) return;
 
-  async function fetchCalendar(year, month) {
-    const startDate = new Date(year, month, 1).toISOString().slice(0, 10);
-    const endDate = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-    title.textContent = new Date(year, month).toLocaleString("default", { month: "long", year: "numeric" });
+  let availabilityData = {};
+  let currentMonth = new Date().getMonth();
+  let currentYear = new Date().getFullYear();
+  window.selectedStart = null;
+  window.selectedEnd = null;
 
-    container.innerHTML = `<div class="text-gray-400 text-sm text-center">Loading...</div>`;
-
+  async function loadAvailability() {
     try {
-      const res = await fetch(`${BACKEND_URL}?listingId=${LISTING_ID}&startDate=${startDate}&endDate=${endDate}`);
+      const res = await fetch(CALENDAR_URL);
       const data = await res.json();
-      const days = (data.result || []).map(day => ({
-        date: day.date,
-        available: day.isAvailable === 1 || day.status === "available"
-      }));
-      renderCalendar(days);
+      availabilityData = data.result || data.calendar || {};
+      renderCalendar();
     } catch (err) {
       console.error("Error loading calendar:", err);
-      container.innerHTML = `<p class="text-red-500 text-center text-sm">Error loading data.</p>`;
+      container.innerHTML = `<p class="text-red-500 text-sm text-center">Error loading availability</p>`;
     }
   }
 
-  function renderCalendar(days) {
-    const grid = document.createElement("div");
-    grid.className = "grid grid-cols-7 gap-2 text-center";
+  function renderCalendar() {
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const startWeekday = firstDay.getDay();
+    const totalDays = lastDay.getDate();
 
-    const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-    weekdays.forEach(d => {
-      const el = document.createElement("div");
-      el.textContent = d;
-      el.className = "text-xs text-gray-400 font-medium";
-      grid.appendChild(el);
-    });
+    title.textContent = `${firstDay.toLocaleString("default", { month: "long" })} ${currentYear}`;
 
-    const firstDay = new Date(days[0].date).getDay();
-    for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement("div"));
+    let daysHTML = "";
+    const today = new Date().toISOString().split("T")[0];
 
-    days.forEach(day => {
-      const el = document.createElement("div");
-      el.textContent = new Date(day.date).getDate();
-      el.className =
-        "p-2 rounded-md text-sm transition-all duration-200 " +
-        (day.available
-          ? "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer"
-          : "bg-red-100 text-red-700 line-through cursor-not-allowed");
-      grid.appendChild(el);
-    });
+    // pad before first day
+    for (let i = 0; i < startWeekday; i++) {
+      daysHTML += `<div class="h-10"></div>`;
+    }
 
-    container.innerHTML = "";
-    container.appendChild(grid);
+    for (let d = 1; d <= totalDays; d++) {
+      const dateObj = new Date(currentYear, currentMonth, d);
+      const dateStr = dateObj.toISOString().split("T")[0];
+      const available = availabilityData[dateStr] ? availabilityData[dateStr].available : true;
+      const isPast = dateObj < new Date(today);
+      const selected =
+        (window.selectedStart && window.selectedStart === dateStr) ||
+        (window.selectedEnd && window.selectedEnd === dateStr) ||
+        (window.selectedStart &&
+          window.selectedEnd &&
+          dateStr > window.selectedStart &&
+          dateStr < window.selectedEnd);
+
+      const cls = [
+        "day",
+        "flex items-center justify-center rounded-md text-sm cursor-pointer select-none",
+        "transition",
+        isPast ? "text-gray-300 cursor-not-allowed" : "",
+        available ? "bg-green-50 hover:bg-green-100" : "bg-red-50 text-red-500 cursor-not-allowed",
+        selected ? "bg-blue-600 text-white" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      daysHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+    }
+
+    container.innerHTML = `
+      <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-2 font-medium">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+      </div>
+      <div class="grid grid-cols-7 gap-1">${daysHTML}</div>
+    `;
   }
 
-  document.getElementById("prev-month").addEventListener("click", () => {
-    currentMonth--;
+  function changeMonth(delta) {
+    currentMonth += delta;
     if (currentMonth < 0) {
       currentMonth = 11;
       currentYear--;
-    }
-    fetchCalendar(currentYear, currentMonth);
-  });
-
-  document.getElementById("next-month").addEventListener("click", () => {
-    currentMonth++;
-    if (currentMonth > 11) {
+    } else if (currentMonth > 11) {
       currentMonth = 0;
       currentYear++;
     }
-    fetchCalendar(currentYear, currentMonth);
+    renderCalendar();
+  }
+
+  // click events
+  container.addEventListener("click", (e) => {
+    const dayEl = e.target.closest(".day");
+    if (!dayEl || dayEl.classList.contains("cursor-not-allowed")) return;
+    const date = dayEl.dataset.date;
+
+    // selection logic
+    if (!window.selectedStart || (window.selectedStart && window.selectedEnd)) {
+      window.selectedStart = date;
+      window.selectedEnd = null;
+    } else {
+      const start = new Date(window.selectedStart);
+      const end = new Date(date);
+      if (end < start) {
+        window.selectedEnd = window.selectedStart;
+        window.selectedStart = date;
+      } else {
+        window.selectedEnd = date;
+      }
+    }
+
+    renderCalendar();
+
+    // highlight range
+    if (window.selectedStart && window.selectedEnd) {
+      const allDays = container.querySelectorAll(".day");
+      allDays.forEach((d) => {
+        const dStr = d.dataset.date;
+        if (dStr >= window.selectedStart && dStr <= window.selectedEnd)
+          d.classList.add("bg-blue-100");
+      });
+    }
+
+    // update label on booking card
+    if (window._booking) {
+      window._booking.setDatesLabel(window.selectedStart, window.selectedEnd);
+    }
   });
 
-  fetchCalendar(currentYear, currentMonth);
-}
-document.addEventListener("DOMContentLoaded", loadHostawayCalendar);
+  document.getElementById("prev-month")?.addEventListener("click", () => changeMonth(-1));
+  document.getElementById("next-month")?.addEventListener("click", () => changeMonth(1));
+
+  await loadAvailability();
+})();
