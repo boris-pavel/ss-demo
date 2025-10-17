@@ -71,7 +71,7 @@ app.get("/photos", async (req, res) => {
     const { listingId } = req.query;
     if (!listingId) return res.status(400).json({ error: "listingId is required" });
 
-    // 1️⃣ Get access token
+    //  Get access token
     const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -84,7 +84,7 @@ app.get("/photos", async (req, res) => {
     });
     const { access_token } = await tokenRes.json();
 
-    // 2️⃣ Get the listing details
+    //  Get the listing details
     const listingRes = await fetch(
       `https://api.hostaway.com/v1/listings/${listingId}`,
       { headers: { Authorization: `Bearer ${access_token}` } }
@@ -92,7 +92,7 @@ app.get("/photos", async (req, res) => {
     const json = await listingRes.json();
     const listing = json.result;
 
-    // 3️⃣ Extract photos from listingImages
+    // Extract photos from listingImages
     const photos = (listing.listingImages || [])
       .filter(img => img.url && img.url.startsWith("https"))
       .map(img => ({

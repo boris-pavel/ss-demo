@@ -1,7 +1,9 @@
 async function loadReviews() {
+  const id = window.LISTING_ID;
   const container = document.getElementById("reviews-container");
+  if (!container || !id) return;
   try {
-    const res = await fetch(`https://living-water-backend.onrender.com/reviews?listingId=97521`);
+    const res = await fetch(`https://living-water-backend.onrender.com/reviews?listingId=${id}`);
     const data = await res.json();
     const reviews = data.result?.filter(r => r.type === "guest-to-host" && r.status === "published") || [];
     if (!reviews.length) {
@@ -11,28 +13,28 @@ async function loadReviews() {
     const avg = reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length;
     const stars = Math.round(avg / 2);
     let html = `
-      <div class="text-center mb-6">
+      <div class="sticky top-0 bg-white pb-3 border-b border-gray-100 z-10 text-center mb-4">
         <div class="text-yellow-500 text-xl">${"★".repeat(stars)}${"☆".repeat(5 - stars)}</div>
-        <p class="text-gray-700 font-medium mt-1">${(avg / 2).toFixed(1)} / 5 average rating</p>
+        <p class="text-gray-700 font-medium">${(avg / 2).toFixed(1)} / 5 average rating</p>
         <p class="text-gray-400 text-xs">${reviews.length} guest reviews</p>
-      </div>
-    `;
-    reviews.forEach(r => {
+      </div>`;
+    html += reviews.map(r => {
       const sc = Math.round((r.rating || 0) / 2);
-      html += `
-        <div class="border border-gray-200 rounded-xl p-4 shadow-sm bg-gray-50 mb-3">
-          <div class="flex justify-between items-center mb-1">
-            <span class="font-medium text-gray-800">${r.reviewerName || "Guest"}</span>
-            <span class="text-yellow-500 text-sm">${"★".repeat(sc)}${"☆".repeat(5 - sc)}</span>
-          </div>
-          <p class="text-gray-600 text-sm mb-1">${r.publicReview || ""}</p>
-          <p class="text-xs text-gray-400">${new Date(r.submittedAt || r.updatedOn || r.createdAt).toLocaleDateString()}</p>
-        </div>`;
-    });
+      const dt = new Date(r.submittedAt || r.updatedOn || r.createdAt).toLocaleDateString();
+      return `
+       <div class="border border-gray-200 rounded-xl p-4 shadow-sm bg-gray-50 mb-3">
+         <div class="flex justify-between items-center mb-1">
+           <span class="font-medium text-gray-800">${r.reviewerName || "Guest"}</span>
+           <span class="text-yellow-500 text-sm">${"★".repeat(sc)}${"☆".repeat(5 - sc)}</span>
+         </div>
+         <p class="text-gray-600 text-sm mb-1">${r.publicReview || ""}</p>
+         <p class="text-xs text-gray-400">${dt}</p>
+       </div>`;
+    }).join("");
     container.innerHTML = html;
   } catch (e) {
-    console.error(e);
-    container.innerHTML = `<p class="text-center text-red-500">Error loading reviews.</p>`;
+    console.error("reviews error:", e);
+    container.innerHTML = '<p class="text-center text-red-500">Error loading reviews.</p>';
   }
 }
 document.addEventListener("DOMContentLoaded", () => setTimeout(loadReviews, 2000));
