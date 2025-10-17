@@ -28,32 +28,39 @@ app.get("/availability", async (req, res) => {
         scope: "general",
       }),
     });
-    const { access_token } = await tokenRes.json();
 
-    //  Fetch availability from Hostaway API
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+    if (!accessToken) throw new Error("Failed to get access token");
+
+    //  Request the next 3 months of calendar data
     const today = new Date();
     const end = new Date();
-    end.setMonth(end.getMonth() + 3); // fetch 3 months ahead
-    const url = `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${today
-      .toISOString()
-      .split("T")[0]}&endDate=${end.toISOString().split("T")[0]}`;
+    end.setMonth(end.getMonth() + 3);
+    const startDate = today.toISOString().split("T")[0];
+    const endDate = end.toISOString().split("T")[0];
 
-    const apiRes = await fetch(url, {
-      headers: { Authorization: `Bearer ${access_token}` },
+    const apiUrl = `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`;
+    const apiRes = await fetch(apiUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
-    const json = await apiRes.json();
+    const data = await apiRes.json();
 
+    //  Normalize result
     const result = {};
-    json.result?.calendar?.forEach((day) => {
-      result[day.date] = { available: day.available };
-    });
+    if (data.result?.calendar) {
+      data.result.calendar.forEach((d) => {
+        result[d.date] = { available: d.available, price: d.price };
+      });
+    }
 
     res.json({ result });
-  } catch (e) {
-    console.error("Error fetching availability:", e);
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Error fetching availability:", err);
+    res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
