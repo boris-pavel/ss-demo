@@ -163,5 +163,43 @@ app.get("/listings-debug", async (req, res) => {
   }
 });
 
+app.get("/amenities", async (req, res) => {
+  try {
+    const { listingId } = req.query;
+    if (!listingId) return res.status(400).json({ error: "listingId required" });
+
+    //  Get access token
+    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: process.env.HOSTAWAY_ACCOUNT_ID,
+        client_secret: process.env.HOSTAWAY_SECRET,
+        scope: "general",
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+    if (!accessToken) throw new Error("Failed to get access token");
+
+    //  Fetch listing details
+    const apiUrl = `https://api.hostaway.com/v1/listings/${listingId}`;
+    const apiRes = await fetch(apiUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await apiRes.json();
+
+    //  Extract amenities
+    const amenities = data.result?.amenities || [];
+
+    res.json({ amenities });
+  } catch (err) {
+    console.error("Error fetching amenities:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
