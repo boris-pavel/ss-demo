@@ -26,27 +26,29 @@
     }
   }
 
-  function renderTwoMonths() {
-    const month1 = renderMonth(currentYear, currentMonth);
-    const nextMonth = (currentMonth + 1) % 12;
-    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-    const month2 = renderMonth(nextYear, nextMonth);
+ function renderTwoMonths() {
+  const month1 = renderMonth(currentYear, currentMonth);
+  const nextMonth = (currentMonth + 1) % 12;
+  const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+  const month2 = renderMonth(nextYear, nextMonth);
 
-    title.textContent = `${new Date(
-      currentYear,
-      currentMonth
-    ).toLocaleString("default", { month: "long", year: "numeric" })} & ${new Date(
-      nextYear,
-      nextMonth
-    ).toLocaleString("default", { month: "long", year: "numeric" })}`;
+  title.textContent = `${new Date(
+    currentYear,
+    currentMonth
+  ).toLocaleString("default", { month: "long", year: "numeric" })} & ${new Date(
+    nextYear,
+    nextMonth
+  ).toLocaleString("default", { month: "long", year: "numeric" })}`;
 
-    container.innerHTML = `
-      <div class="grid md:grid-cols-2 gap-8 w-full justify-center items-start">
-        ${month1}
-        ${month2}
-      </div>
-    `;
-  }
+  // keep both months in a horizontal flex layout
+  container.innerHTML = `
+    <div id="months-wrapper" class="flex flex-wrap md:flex-nowrap justify-center items-start gap-8 w-full overflow-hidden">
+      ${month1}
+      ${month2}
+    </div>
+  `;
+}
+
 
   function renderMonth(year, month) {
     const firstDay = new Date(year, month, 1);
