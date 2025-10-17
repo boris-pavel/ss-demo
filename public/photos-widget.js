@@ -1,6 +1,6 @@
 async function loadPhotos() {
   const PHOTOS_URL = "https://living-water-backend.onrender.com/photos";
-  const LISTING_ID = "YOUR_LISTING_ID"; // replace with your real Hostaway listing ID
+  const LISTING_ID = "97521"; // replace with your real Hostaway listing ID
   const container = document.getElementById("photos-container");
 
   try {
