@@ -17,7 +17,7 @@ app.get("/availability", async (req, res) => {
     const { listingId } = req.query;
     if (!listingId) return res.status(400).json({ error: "listingId required" });
 
-    // Get access token
+    // 1️⃣ Get access token
     const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -33,35 +33,45 @@ app.get("/availability", async (req, res) => {
     const accessToken = tokenData.access_token;
     if (!accessToken) throw new Error("Failed to get access token");
 
-    //  Request the next 3 months of calendar data
+    // 2️⃣ Define date range
     const today = new Date();
     const end = new Date();
     end.setMonth(end.getMonth() + 3);
     const startDate = today.toISOString().split("T")[0];
     const endDate = end.toISOString().split("T")[0];
 
-    const apiUrl = `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`;
-    const apiRes = await fetch(apiUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const data = await apiRes.json();
+    // 3️⃣ Try standard calendar endpoint first
+    let result = {};
+    let apiRes = await fetch(
+      `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    let data = await apiRes.json();
 
-    //  Normalize result
-    const result = {};
-    if (data.result?.calendar) {
-      data.result.calendar.forEach((d) => {
-        result[d.date] = { available: d.available, price: d.price };
-      });
+    // if empty, fallback to /availabilityCalendar
+    if (!data.result?.calendar?.length) {
+      const altRes = await fetch(
+        `https://api.hostaway.com/v1/availabilityCalendar?listingId=${listingId}&startDate=${startDate}&endDate=${endDate}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      data = await altRes.json();
     }
 
+    // normalize data
+    const days = data.result?.calendar || data.result?.days || [];
+    days.forEach((day) => {
+      result[day.date] = {
+        available: day.available,
+        price: day.price,
+      };
+    });
+
     res.json({ result });
-  } catch (err) {
-    console.error("Error fetching availability:", err);
-    res.status(500).json({ error: err.message });
+  } catch (e) {
+    console.error("Error fetching availability:", e);
+    res.status(500).json({ error: e.message });
   }
 });
-
-
 
 
 app.get("/reviews", async (req, res) => {
