@@ -68,36 +68,34 @@ app.get("/reviews", async (req, res) => {
 
 app.get("/photos", async (req, res) => {
   try {
-    const { listingId } = req.query;
+    const { id } = req.query; // optional filter by listing id
+    const data = await fetch("https://living-water-backend.onrender.com/listings-debug.json").then(r => r.json());
 
-    // Get an access token
-    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: process.env.HOSTAWAY_ACCOUNT_ID,
-        client_secret: process.env.HOSTAWAY_SECRET,
-        scope: "general",
-      }),
-    });
-    const { access_token } = await tokenRes.json();
+    if (!data.result || !Array.isArray(data.result)) {
+      return res.status(400).json({ photos: [], error: "Invalid JSON format" });
+    }
 
-    // Fetch listing details (which include photos)
-    const photoRes = await fetch(
-      `https://api.hostaway.com/v1/listings/${listingId}`,
-      { headers: { Authorization: `Bearer ${access_token}` } }
+    let listings = data.result;
+    if (id) listings = listings.filter(l => String(l.id) === String(id));
+
+    const photos = listings.flatMap(l =>
+      (l.listingImages || []).map(img => ({
+        url: img.url,
+        caption:
+          img.bookingEngineCaption ||
+          img.airbnbCaption ||
+          img.caption ||
+          "Photo",
+      }))
     );
-
-    const data = await photoRes.json();
-    const photos = data.result?.pictures || [];
 
     res.json({ photos });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ photos: [], error: err.message });
   }
 });
+
 
 
 app.get("/listings-debug", async (req, res) => {
