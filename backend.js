@@ -66,4 +66,38 @@ app.get("/reviews", async (req, res) => {
 });
 
 
+app.get("/photos", async (req, res) => {
+  try {
+    const { listingId } = req.query;
+
+    // Get an access token
+    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: process.env.HOSTAWAY_ACCOUNT_ID,
+        client_secret: process.env.HOSTAWAY_SECRET,
+        scope: "general",
+      }),
+    });
+    const { access_token } = await tokenRes.json();
+
+    // Fetch listing details (which include photos)
+    const photoRes = await fetch(
+      `https://api.hostaway.com/v1/listings/${listingId}`,
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    );
+
+    const data = await photoRes.json();
+    const photos = data.result?.pictures || [];
+
+    res.json({ photos });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
