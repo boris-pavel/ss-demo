@@ -126,9 +126,13 @@ app.get("/reviews", async (req, res) => {
       }
     }
 
-    const filtered = aggregated.filter(
-      (item) => Number(item?.rating ?? 0) > 0
-    );
+    const filtered = aggregated
+      .filter((item) => Number(item?.rating ?? 0) > 0)
+      .sort((a, b) => {
+        const dateA = new Date(a?.submittedAt || a?.createdAt || 0);
+        const dateB = new Date(b?.submittedAt || b?.createdAt || 0);
+        return dateB - dateA;
+      });
 
     res.json({
       status: "success",
