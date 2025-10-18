@@ -80,6 +80,19 @@
 
     let showAll = false;
 
+    const applyScrollState = () => {
+      if (!container) return;
+      if (showAll) {
+        container.style.maxHeight = "28rem";
+        container.style.overflowY = "auto";
+        container.style.paddingRight = "0.25rem";
+      } else {
+        container.style.maxHeight = "";
+        container.style.overflowY = "";
+        container.style.paddingRight = "";
+      }
+    };
+
     const render = () => {
       const visibleReviews = showAll
         ? guestReviews
@@ -125,6 +138,8 @@
         })
         .join("");
 
+      applyScrollState();
+
       const toggleButtons = container.querySelectorAll(".review-toggle");
       toggleButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -157,6 +172,9 @@
       showAllBtn.addEventListener("click", () => {
         showAll = !showAll;
         render();
+        if (showAll) {
+          container.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       });
     }
   } catch (error) {
