@@ -126,10 +126,14 @@ app.get("/reviews", async (req, res) => {
       }
     }
 
+    const filtered = aggregated.filter(
+      (item) => Number(item?.rating ?? 0) > 0
+    );
+
     res.json({
       status: "success",
-      count: aggregated.length,
-      result: aggregated,
+      count: filtered.length,
+      result: filtered,
     });
   } catch (error) {
     console.error("Error fetching reviews:", error);
