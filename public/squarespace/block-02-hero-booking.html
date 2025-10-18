@@ -1,0 +1,118 @@
+<!-- Block 02: Hero gallery and booking card -->
+<section id="hero" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] items-start">
+    <div class="space-y-6">
+      <div class="card-surface rounded-[28px] p-6 relative">
+        <div id="rating-badge" class="absolute top-6 right-6 inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-ink shadow-card">
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white text-xs font-semibold">★</span>
+          <span>4.95</span>
+        </div>
+        <div class="grid gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <div
+            id="hero-main"
+            class="relative col-span-full lg:col-span-1 h-64 sm:h-80 md:h-[420px] rounded-3xl overflow-hidden bg-[#f0f0f0]"
+          ></div>
+          <div id="hero-thumbs" class="grid grid-cols-2 gap-3 h-full min-h-[220px]">
+            <div class="rounded-2xl bg-[#f0f0f0]"></div>
+            <div class="rounded-2xl bg-[#f0f0f0]"></div>
+            <div class="rounded-2xl bg-[#f0f0f0]"></div>
+            <div class="rounded-2xl bg-[#f0f0f0]"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-surface rounded-[28px] p-6 space-y-4">
+        <div class="flex flex-wrap items-center gap-4 text-sm text-muted">
+          <div class="inline-flex items-center gap-1.5 rounded-full pill-muted px-3 py-1">
+            <span>House</span>
+          </div>
+          <div class="flex items-center gap-2 text-ink font-medium">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand/15 text-brand">★</span>
+            <span id="listing-rating" class="flex items-center gap-1">
+              <span>4.95</span>
+              <span class="text-muted text-sm">42 reviews</span>
+            </span>
+          </div>
+        </div>
+        <h1 id="listing-title" class="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
+          Lakeside Retreat w/ Kayaks, Fire Pit & Outside Dinning
+        </h1>
+        <p id="listing-meta" class="text-muted">
+          6 guests • 3 bedrooms • 1 bathroom
+        </p>
+        <p id="listing-description" class="text-sm sm:text-base leading-relaxed text-[#5b564c]">
+          Escape to 2.5 private acres on Lake Granbury where mornings begin with coffee on a porch swing and days end with s'mores by the fire pit. Kayak at sunrise, fish off the bank, or simply relax under a pergola while the breeze rolls through. This lakefront home offers everything you need to unplug and reconnect.
+        </p>
+        <button
+          id="toggle-description"
+          class="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:text-ink transition"
+        >
+          Show more
+        </button>
+      </div>
+    </div>
+
+    <aside class="card-surface rounded-[28px] p-6 space-y-6">
+      <div class="space-y-3">
+        <h2 class="text-lg font-semibold text-ink">
+          Select dates and guests to see price per night
+        </h2>
+        <p id="selected-dates-label" class="text-sm text-muted">
+          Select check-in and check-out dates
+        </p>
+      </div>
+      <div class="space-y-4">
+        <button
+          id="open-calendar"
+          class="w-full rounded-full border border-brand/40 bg-white px-5 py-3 text-sm font-semibold text-ink hover:bg-brand/10 transition"
+        >
+          Select Dates
+        </button>
+        <div class="flex items-center justify-between rounded-2xl border border-[#e6d8c8] px-4 py-3">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-muted">Guests</p>
+            <p class="text-lg font-semibold text-ink">
+              <span id="guests-label">1</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              id="guests-dec"
+              class="h-9 w-9 rounded-full border border-brand/30 text-brand hover:bg-brand/10 transition"
+            >
+              −
+            </button>
+            <button
+              id="guests-inc"
+              class="h-9 w-9 rounded-full border border-brand/30 text-brand hover:bg-brand/10 transition"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            id="book-now"
+            class="flex-1 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand/90 transition"
+          >
+            Book now
+          </button>
+          <button
+            class="flex-1 rounded-full border border-brand/30 bg-white px-5 py-3 text-sm font-semibold text-ink hover:bg-brand/10 transition"
+          >
+            Send Inquiry
+          </button>
+        </div>
+        <button
+          id="clear-dates"
+          class="w-full text-sm font-medium text-muted hover:text-ink transition"
+        >
+          Clear dates
+        </button>
+      </div>
+      <p class="text-xs text-muted">
+        You will not be charged yet. Book instantly or reach out for custom dates.
+      </p>
+    </aside>
+  </div>
+</section>

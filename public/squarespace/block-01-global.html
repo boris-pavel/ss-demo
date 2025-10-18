@@ -1,0 +1,82 @@
+<!-- Block 01: Global styles, fonts, and site header -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+  rel="stylesheet"
+>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-o9N1j7kGStbAk6Yf/J29vY1A+sEM+ty3glv9Z5o7yE0="
+  crossorigin=""
+>
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          sand: "#f6f1ea",
+          sandLight: "#f8f4ef",
+          brand: "#d9a574",
+          accent: "#f7b500",
+          ink: "#2f2c2c",
+          muted: "#6b665c",
+        },
+        fontFamily: {
+          sans: ["Inter", "system-ui", "sans-serif"],
+          serif: ["Playfair Display", "serif"],
+        },
+        boxShadow: {
+          card: "0 20px 45px rgba(82, 61, 29, 0.08)",
+        },
+        borderRadius: {
+          xl2: "1.25rem",
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: #f6f1ea;
+    color: #2f2c2c;
+  }
+
+  .brand-script {
+    font-family: "Playfair Display", serif;
+  }
+
+  .card-surface {
+    background-color: #ffffff;
+    border: 1px solid #efe3d4;
+    box-shadow: 0 18px 48px rgba(96, 73, 39, 0.08);
+  }
+
+  .pill-muted {
+    border: 1px solid #d9cfc0;
+    background-color: #fbf8f3;
+  }
+</style>
+
+<header class="bg-sandLight/80 backdrop-blur border-b border-[#e6d8c8]">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full bg-brand/15 border border-brand/40 flex items-center justify-center">
+        <span class="brand-script text-brand text-xl">LW</span>
+      </div>
+      <span class="brand-script text-2xl text-ink">Living Waters</span>
+    </div>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-muted">
+      <a class="hover:text-ink transition" href="#hero">Home</a>
+      <a class="hover:text-ink transition" href="#listings">All listings</a>
+      <a class="hover:text-ink transition" href="#about">About Us</a>
+      <a class="hover:text-ink transition" href="#contact">Get in Touch</a>
+    </nav>
+    <button class="md:hidden rounded-full border border-brand/30 bg-white px-4 py-2 text-sm font-medium text-brand">
+      Menu
+    </button>
+  </div>
+</header>

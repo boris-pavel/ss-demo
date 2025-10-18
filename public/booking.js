@@ -34,7 +34,9 @@
     window.selectedStart = null;
     window.selectedEnd = null;
     window._booking.setDatesLabel(null, null);
-    document.querySelectorAll(".day").forEach(d => d.classList.remove("bg-blue-100","bg-blue-600","text-white"));
+    document.querySelectorAll(".day").forEach((d) =>
+      d.classList.remove("bg-brand/10", "bg-brand", "text-white", "text-brand")
+    );
   };
 
   // book now

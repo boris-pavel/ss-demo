@@ -1,61 +1,169 @@
 (async function () {
   const listingId = window.LISTING_ID || "97521";
-  const container = document.querySelector("#reviews-container");
+  const container = document.getElementById("reviews-container");
+  const showAllBtn = document.getElementById("show-all-reviews");
+  const ratingEl = document.getElementById("listing-rating");
+  const badgeEl = document.getElementById("rating-badge");
+  const summaryEl = document.getElementById("reviews-summary");
   if (!container) return;
 
-  try {
-    const res = await fetch(`https://living-water-backend.onrender.com/reviews?listingId=${listingId}`);
-    const data = await res.json();
+  const reviewsUrl = `https://living-water-backend.onrender.com/reviews?listingId=${listingId}`;
+  const VISIBLE_COUNT = 4;
 
-    const reviews = Array.isArray(data.result) ? data.result : [];
-    if (reviews.length === 0) {
-      container.innerHTML = `<div class="text-gray-500 text-center">No reviews available.</div>`;
+  const formatDate = (value) => {
+    if (!value) return "";
+    const [datePart] = value.split(" ");
+    const date = new Date(datePart);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString("default", { month: "long", year: "numeric" });
+  };
+
+  const buildStars = (ratingOutOf10) => {
+    const ratingOutOfFive = Number(ratingOutOf10 || 10) / 2;
+    const rounded = Math.round(ratingOutOfFive * 2) / 2;
+    let stars = "";
+    for (let i = 1; i <= 5; i += 1) {
+      stars += i <= rounded ? "&#9733;" : "&#9734;";
+    }
+    return `<span class="text-brand text-base tracking-tight">${stars}</span>`;
+  };
+
+  const shorten = (text, max = 240) => {
+    if (!text) return { short: "", full: "", truncated: false };
+    const trimmed = text.trim();
+    if (trimmed.length <= max) {
+      return { short: trimmed, full: trimmed, truncated: false };
+    }
+    const clipped = trimmed.slice(0, max).split(" ").slice(0, -1).join(" ");
+    return { short: `${clipped}...`, full: trimmed, truncated: true };
+  };
+
+  try {
+    const response = await fetch(reviewsUrl);
+    const data = await response.json();
+    const reviewsArray = Array.isArray(data.result) ? data.result : [];
+    const guestReviews = reviewsArray.filter(
+      (review) => review.type === "guest-to-host" || !review.type
+    );
+
+    if (!guestReviews.length) {
+      container.innerHTML =
+        '<div class="rounded-2xl bg-[#fbf8f3] px-4 py-3 text-sm text-muted text-center">No reviews available yet.</div>';
+      if (showAllBtn) showAllBtn.classList.add("hidden");
+      if (summaryEl) summaryEl.textContent = "No guest reviews yet";
       return;
     }
 
-    // Only include guest-to-host reviews if available
-    const guestReviews = reviews.filter((r) => r.type === "guest-to-host" || !r.type);
+    const total = guestReviews.length;
+    const sumRatings = guestReviews.reduce(
+      (totalRating, item) => totalRating + Number(item.rating || 0),
+      0
+    );
+    const averageRatingRaw = total > 0 ? sumRatings / total : 0;
+    const averageRating = (averageRatingRaw / 2).toFixed(2);
 
-    // Calculate average rating (Hostaway ratings are usually /10)
-    const avg =
-      guestReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-      (guestReviews.length || 1);
-    const avgStars = (avg / 2).toFixed(1); // Convert 10 → 5-star scale
+    if (ratingEl) {
+      ratingEl.innerHTML = `
+        <span>${averageRating}</span>
+        <span class="text-muted text-sm">${total} review${total === 1 ? "" : "s"}</span>
+      `;
+    }
 
-    // Render
-    container.innerHTML = `
-      <div class="mb-4 text-center">
-        <div class="flex items-center justify-center gap-2 text-lg font-semibold text-gray-800">
-          <span class="text-yellow-500 text-xl">★</span>
-          <span>${avgStars}</span>
-          <span class="text-gray-500 text-base">· ${guestReviews.length} review${guestReviews.length !== 1 ? "s" : ""}</span>
-        </div>
-      </div>
+    if (summaryEl) {
+      summaryEl.textContent = `${averageRating} out of 5 across ${total} recent guest review${total === 1 ? "" : "s"}`;
+    }
 
-      <div class="space-y-5">
-        ${guestReviews
-          .map(
-            (r) => `
-          <div class="border-b border-gray-100 pb-3">
-            <div class="flex items-center justify-between text-sm">
-              <div class="font-semibold">${r.reviewerName || "Anonymous"}</div>
-              <div class="text-gray-400">${
-                r.submittedAt ? r.submittedAt.split(" ")[0] : ""
-              }</div>
-            </div>
-            <div class="text-yellow-500 text-sm mt-1">
-              ${"★".repeat(Math.round((r.rating || 10) / 2))}
-            </div>
-            <p class="mt-1 text-gray-700 leading-snug">${
-              r.publicReview || ""
-            }</p>
-          </div>`
-          )
-          .join("")}
-      </div>
-    `;
-  } catch (err) {
-    console.error("Error loading reviews:", err);
-    container.innerHTML = `<div class="text-red-500 text-sm text-center">Failed to load reviews.</div>`;
+    if (badgeEl) {
+      const badgeValue = badgeEl.querySelector("span:last-child");
+      if (badgeValue) badgeValue.textContent = averageRating;
+    }
+
+    let showAll = false;
+
+    const render = () => {
+      const visibleReviews = showAll
+        ? guestReviews
+        : guestReviews.slice(0, VISIBLE_COUNT);
+
+      container.innerHTML = visibleReviews
+        .map((review, index) => {
+          const { short, full, truncated } = shorten(review.publicReview);
+          const reviewIndex = index;
+          return `
+            <article class="space-y-3 border-b border-[#f0e7da] pb-5 last:border-b-0 last:pb-0">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-semibold text-ink">${review.reviewerName || "Guest"}</p>
+                  <p class="text-xs text-muted">${formatDate(review.submittedAt)}</p>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-brand font-medium">
+                  ${buildStars(review.rating)}
+                  <span class="text-xs text-muted">${(Number(review.rating || 0) / 2).toFixed(1)}</span>
+                </div>
+              </div>
+              <p
+                class="text-sm leading-relaxed text-[#5b564c]"
+                data-full="${encodeURIComponent(full)}"
+                data-short="${encodeURIComponent(short)}"
+                data-truncated="${truncated}"
+                id="review-text-${reviewIndex}"
+              >
+                ${short}
+              </p>
+              ${
+                truncated
+                  ? `<button
+                      class="review-toggle text-sm font-semibold text-brand hover:text-ink transition"
+                      data-target="review-text-${reviewIndex}"
+                    >
+                      Show more
+                    </button>`
+                  : ""
+              }
+            </article>
+          `;
+        })
+        .join("");
+
+      const toggleButtons = container.querySelectorAll(".review-toggle");
+      toggleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const targetId = button.getAttribute("data-target");
+          const textNode = document.getElementById(targetId);
+          if (!textNode) return;
+          const isExpanded = button.dataset.expanded === "true";
+          const fullText = decodeURIComponent(textNode.getAttribute("data-full") || "");
+          const shortText = decodeURIComponent(textNode.getAttribute("data-short") || "");
+
+          textNode.textContent = isExpanded ? shortText : fullText;
+          button.textContent = isExpanded ? "Show more" : "Show less";
+          button.dataset.expanded = isExpanded ? "false" : "true";
+        });
+      });
+
+      if (showAllBtn) {
+        if (guestReviews.length <= VISIBLE_COUNT) {
+          showAllBtn.classList.add("hidden");
+        } else {
+          showAllBtn.classList.remove("hidden");
+          showAllBtn.textContent = showAll ? "Show fewer reviews" : `Show all ${guestReviews.length} reviews`;
+        }
+      }
+    };
+
+    render();
+
+    if (showAllBtn) {
+      showAllBtn.addEventListener("click", () => {
+        showAll = !showAll;
+        render();
+      });
+    }
+  } catch (error) {
+    console.error("Error loading reviews:", error);
+    container.innerHTML =
+      '<div class="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 text-center">Failed to load reviews.</div>';
+    if (summaryEl) summaryEl.textContent = "Unable to load reviews";
+    if (showAllBtn) showAllBtn.classList.add("hidden");
   }
 })();

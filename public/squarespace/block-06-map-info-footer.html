@@ -1,0 +1,64 @@
+<!-- Block 06: Map, good to know, and footer -->
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] items-start">
+    <div class="card-surface rounded-[28px] p-0 overflow-hidden">
+      <div class="h-[360px]" id="map"></div>
+    </div>
+    <div class="card-surface rounded-[28px] p-6 sm:p-8 space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-ink">Good to know</h2>
+        <button
+          id="toggle-house-rules"
+          class="text-sm font-semibold text-brand hover:text-ink transition"
+        >
+          Show more
+        </button>
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2">
+        <div>
+          <h3 class="text-sm font-semibold text-ink uppercase tracking-wide">House Rules</h3>
+          <ul id="house-rules-list" class="mt-3 space-y-2 text-sm text-muted">
+            <li>Check-in: 4 pm</li>
+            <li>Check-out: 10 am</li>
+            <li>Pets: allowed</li>
+            <li>Smoking inside: not allowed</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-ink uppercase tracking-wide">Cancellation policy</h3>
+          <ul id="cancellation-list" class="mt-3 space-y-2 text-sm text-muted">
+            <li>100% refund up to 30 days before arrival</li>
+            <li>50% refund up to 14 days before arrival</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="bg-sandLight border-t border-[#e6d8c8]">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 text-sm text-muted">
+      <div class="flex items-center gap-3">
+        <span class="brand-script text-xl text-brand">Living Waters</span>
+        <span class="text-xs uppercase tracking-wide text-muted">Vacation Rentals</span>
+      </div>
+      <div class="flex flex-wrap gap-x-6 gap-y-3">
+        <a href="#privacy" class="hover:text-ink transition">Privacy Policy</a>
+        <a href="#terms" class="hover:text-ink transition">Terms and Conditions</a>
+        <a href="#contact" class="hover:text-ink transition">Get in touch</a>
+        <a href="#cookies" class="hover:text-ink transition">Cookie Preferences</a>
+      </div>
+      <div class="flex flex-wrap gap-4 text-sm">
+        <span class="flex items-center gap-2">
+          <span>☎</span>
+          <a href="tel:+15126069809" class="hover:text-ink transition">+1 512 606 9809</a>
+        </span>
+        <span class="flex items-center gap-2">
+          <span>✉</span>
+          <a href="mailto:info@stayatlivingwaters.com" class="hover:text-ink transition">info@stayatlivingwaters.com</a>
+        </span>
+      </div>
+    </div>
+  </div>
+</footer>

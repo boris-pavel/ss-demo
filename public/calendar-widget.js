@@ -82,23 +82,34 @@
 
       const cls = [
         "day",
-        "flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-md text-sm cursor-pointer select-none transition-all duration-150",
-        isPast ? "text-gray-300 cursor-not-allowed" : "",
-        available
-          ? "bg-green-50 hover:bg-green-100"
-          : "bg-red-100 text-red-600 cursor-not-allowed",
-        selected ? "bg-blue-600 text-white hover:bg-blue-600" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
+        "flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-xl text-sm font-medium select-none transition-all duration-150",
+      ];
 
-      daysHTML += `<div class="${cls}" data-date="${dateStr}">${d}</div>`;
+      if (available && !isPast) {
+        cls.push(
+          "bg-white text-ink border border-transparent hover:border-brand/40 hover:text-brand cursor-pointer"
+        );
+      } else {
+        cls.push("bg-[#f3ece1] text-[#b7a893] cursor-not-allowed");
+      }
+
+      if (isPast) {
+        cls.push("text-[#c9bda8] cursor-not-allowed hover:border-transparent");
+      }
+
+      if (selected) {
+        cls.push("bg-brand text-white hover:text-white hover:border-brand");
+      }
+
+      const className = cls.join(" ");
+
+      daysHTML += `<div class="${className}" data-date="${dateStr}">${d}</div>`;
     }
 
     return `
-      <div class="bg-white rounded-2xl border border-gray-200 shadow p-5 min-w-[270px] md:min-w-[320px]">
-        <div class="text-center font-semibold text-gray-800 mb-2">${monthLabel}</div>
-        <div class="grid grid-cols-7 gap-1 text-center text-gray-600 mb-1 font-medium">
+      <div class="rounded-3xl border border-[#efe3d4] bg-white/90 shadow-sm p-5 min-w-[270px] md:min-w-[320px]">
+        <div class="text-center font-semibold text-ink mb-3">${monthLabel}</div>
+        <div class="grid grid-cols-7 gap-1 text-center text-muted mb-2 text-xs uppercase tracking-wide">
           <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
         </div>
         <div class="grid grid-cols-7 gap-1 justify-items-center">${daysHTML}</div>
@@ -149,7 +160,11 @@
         dStr >= window.selectedStart &&
         dStr <= window.selectedEnd
       ) {
-        d.classList.add("bg-blue-100");
+        if (d.classList.contains("bg-brand")) {
+          d.classList.add("text-white");
+        } else {
+          d.classList.add("bg-brand/10", "text-brand");
+        }
       }
     });
 

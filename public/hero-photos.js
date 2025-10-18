@@ -3,15 +3,40 @@
   const mainEl = document.getElementById("hero-main");
   const thumbsEl = document.getElementById("hero-thumbs");
 
-  // Create modal container
+  if (!mainEl || !thumbsEl) return;
+
   const modal = document.createElement("div");
   modal.id = "photo-modal";
-  modal.className = "fixed inset-0 bg-black/90 hidden items-center justify-center z-[9999]";
+  modal.className =
+    "fixed inset-0 hidden z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm";
   modal.innerHTML = `
-    <button id="close-modal" class="absolute top-6 right-6 text-white text-3xl font-light">×</button>
-    <button id="prev-photo" class="absolute left-6 text-white text-3xl font-light">‹</button>
-    <img id="modal-image" src="" class="max-h-[90vh] max-w-[90vw] object-contain rounded-lg">
-    <button id="next-photo" class="absolute right-6 text-white text-3xl font-light">›</button>
+    <button
+      id="close-modal"
+      class="absolute top-6 right-6 text-white text-3xl font-light"
+      aria-label="Close gallery"
+    >
+      &times;
+    </button>
+    <button
+      id="prev-photo"
+      class="absolute left-6 text-white text-3xl font-light"
+      aria-label="Previous photo"
+    >
+      &#10094;
+    </button>
+    <img
+      id="modal-image"
+      src=""
+      alt="Listing photo"
+      class="max-h-[90vh] max-w-[90vw] object-contain rounded-3xl shadow-card"
+    >
+    <button
+      id="next-photo"
+      class="absolute right-6 text-white text-3xl font-light"
+      aria-label="Next photo"
+    >
+      &#10095;
+    </button>
   `;
   document.body.appendChild(modal);
 
@@ -21,94 +46,149 @@
   const prevBtn = modal.querySelector("#prev-photo");
 
   let photos = [];
+  let captions = [];
   let currentIndex = 0;
 
   function openModal(index) {
     if (!photos.length) return;
     currentIndex = index;
     modalImg.src = photos[index];
+    modalImg.alt = captions[index] || `Listing photo ${index + 1}`;
     modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
   }
 
   function closeModal() {
     modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
   }
 
   function nextPhoto() {
     currentIndex = (currentIndex + 1) % photos.length;
     modalImg.src = photos[currentIndex];
+    modalImg.alt = captions[currentIndex] || `Listing photo ${currentIndex + 1}`;
   }
 
   function prevPhotoFn() {
     currentIndex = (currentIndex - 1 + photos.length) % photos.length;
     modalImg.src = photos[currentIndex];
+    modalImg.alt = captions[currentIndex] || `Listing photo ${currentIndex + 1}`;
   }
 
   closeBtn.addEventListener("click", closeModal);
   nextBtn.addEventListener("click", nextPhoto);
   prevBtn.addEventListener("click", prevPhotoFn);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+  window.addEventListener("keydown", (event) => {
+    if (modal.classList.contains("hidden")) return;
+    if (event.key === "Escape") closeModal();
+    if (event.key === "ArrowRight") nextPhoto();
+    if (event.key === "ArrowLeft") prevPhotoFn();
   });
 
-  try {
-    const res = await fetch("https://living-water-backend.onrender.com/listings-debug");
+  async function loadListing() {
+    if (window.__LIVING_WATERS_LISTING__) {
+      return window.__LIVING_WATERS_LISTING__;
+    }
+    const res = await fetch(
+      "https://living-water-backend.onrender.com/listings-debug"
+    );
     const data = await res.json();
-    const listings = data.result || [];
-    const listing = listings.find((l) => String(l.id) === String(listingId)) || listings[0];
+    const listings = Array.isArray(data.result) ? data.result : [];
+    return (
+      listings.find((item) => String(item.id) === String(listingId)) ||
+      listings[0] ||
+      null
+    );
+  }
+
+  try {
+    const listing = await loadListing();
     if (!listing) throw new Error("Listing not found");
 
-    photos = listing.listingImages?.map((p) => p.url) || [];
+    const listingPhotos = Array.isArray(listing.listingImages)
+      ? listing.listingImages
+      : [];
 
-    if (photos.length === 0) {
-      mainEl.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400">No photos</div>`;
+    photos = listingPhotos
+      .map((item) => item?.url)
+      .filter((url) => typeof url === "string" && url.startsWith("http"));
+    captions = listingPhotos.map(
+      (item, index) =>
+        item?.bookingEngineCaption ||
+        item?.airbnbCaption ||
+        item?.caption ||
+        `Listing photo ${index + 1}`
+    );
+
+    if (!photos.length) {
+      mainEl.innerHTML =
+        '<div class="flex h-full items-center justify-center rounded-3xl bg-[#f0f0f0] text-sm text-muted">Photos coming soon</div>';
+      thumbsEl.innerHTML = "";
       return;
     }
 
-    // Main hero photo
     mainEl.innerHTML = `
-      <img src="${photos[0]}" 
-           alt="Main listing image" 
-           class="w-full h-full object-cover rounded-xl cursor-pointer">
+      <img
+        src="${photos[0]}"
+        alt="${captions[0] || "Primary listing photo"}"
+        class="w-full h-full object-cover rounded-3xl cursor-pointer transition duration-200 hover:scale-[1.01]"
+      >
     `;
-    mainEl.querySelector("img").addEventListener("click", () => openModal(0));
+    const mainImg = mainEl.querySelector("img");
+    if (mainImg) mainImg.addEventListener("click", () => openModal(0));
 
-    // Thumbnails (next 4)
-    thumbsEl.innerHTML = photos
-      .slice(1, 5)
-      .map(
-        (src, i) => `
-        <div class="relative rounded-xl overflow-hidden cursor-pointer">
-          <img src="${src}" alt="Listing image ${i + 1}" class="w-full h-full object-cover">
+    const thumbMarkup = photos.slice(1, 5).map((src, index) => {
+      const label = captions[index + 1] || `Listing photo ${index + 2}`;
+      return `
+        <div class="relative rounded-2xl overflow-hidden group cursor-pointer min-h-[100px] bg-[#f0f0f0]">
+          <img
+            src="${src}"
+            alt="${label}"
+            class="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+          >
         </div>
-      `
-      )
-      .join("");
-
-    const thumbDivs = thumbsEl.querySelectorAll("div");
-    thumbDivs.forEach((div, i) => {
-      div.addEventListener("click", () => openModal(i + 1));
+      `;
     });
 
-    // Add "+ photos" overlay if more images
+    thumbsEl.innerHTML = thumbMarkup.join("");
+
+    Array.from(thumbsEl.children).forEach((node, index) => {
+      node.addEventListener("click", () => openModal(index + 1));
+    });
+
     if (photos.length > 5) {
-      const extraCount = photos.length - 5;
+      const extraIndex = 5;
+      const extraCount = photos.length - extraIndex;
+      const extraLabel = captions[extraIndex] || `Listing photo ${extraIndex + 1}`;
       thumbsEl.insertAdjacentHTML(
         "beforeend",
         `
-        <div class="relative rounded-xl overflow-hidden group cursor-pointer" id="extra-photo-trigger">
-          <img src="${photos[5]}" class="w-full h-full object-cover opacity-80 group-hover:opacity-60">
-          <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-medium rounded-xl">
-            +${extraCount} photos
+          <div
+            class="relative rounded-2xl overflow-hidden cursor-pointer group min-h-[100px] bg-[#f0f0f0]"
+            id="extra-photo-trigger"
+          >
+            <img
+              src="${photos[extraIndex]}"
+              alt="${extraLabel}"
+              class="h-full w-full object-cover opacity-90 transition duration-200 group-hover:opacity-75"
+            >
+            <div class="absolute inset-0 flex items-center justify-center bg-black/45 text-white text-sm font-semibold">
+              +${extraCount} photos
+            </div>
           </div>
-        </div>
-      `
+        `
       );
-
       const extraBtn = document.getElementById("extra-photo-trigger");
-      extraBtn.addEventListener("click", () => openModal(5));
+      if (extraBtn) {
+        extraBtn.addEventListener("click", () => openModal(extraIndex));
+      }
     }
-  } catch (err) {
-    console.error("Error loading hero section:", err);
+  } catch (error) {
+    console.error("Error loading hero section:", error);
+    mainEl.innerHTML =
+      '<div class="flex h-full items-center justify-center rounded-3xl bg-[#f0f0f0] text-sm text-red-600">Unable to load photos</div>';
   }
 })();

@@ -1,0 +1,29 @@
+<!-- Block 04: Availability calendar -->
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+  <div id="availability" class="card-surface rounded-[28px] p-6 sm:p-8 space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-semibold text-ink">Available days</h2>
+        <p class="text-sm text-muted">Select check-in and check-out dates</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          id="prev-month"
+          class="h-10 w-10 rounded-full border border-brand/30 text-brand hover:bg-brand/10 transition"
+        >
+          ‹
+        </button>
+        <button
+          id="next-month"
+          class="h-10 w-10 rounded-full border border-brand/30 text-brand hover:bg-brand/10 transition"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+    <div>
+      <p id="calendar-title" class="text-base font-semibold text-ink mb-4"></p>
+      <div id="calendar-container" class="w-full overflow-x-auto pb-2"></div>
+    </div>
+  </div>
+</section>
