@@ -68,28 +68,73 @@ app.get("/availability", async (req, res) => {
 
 
 app.get("/reviews", async (req, res) => {
-  const { listingId } = req.query;
+  try {
+    const { listingId } = req.query;
+    if (!listingId) {
+      return res.status(400).json({ error: "listingId required" });
+    }
 
-  // 1. Get an access token
-  const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: process.env.HOSTAWAY_ACCOUNT_ID,
-      client_secret: process.env.HOSTAWAY_SECRET,
-      scope: "general",
-    }),
-  });
-  const { access_token } = await tokenRes.json();
+    // 1. Get an access token
+    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: process.env.HOSTAWAY_ACCOUNT_ID,
+        client_secret: process.env.HOSTAWAY_SECRET,
+        scope: "general",
+      }),
+    });
+    const { access_token: accessToken } = await tokenRes.json();
+    if (!accessToken) {
+      throw new Error("Failed to obtain access token");
+    }
 
-  // 2. Get reviews
-  const revRes = await fetch(
-    `https://api.hostaway.com/v1/reviews?listingId=${listingId}&limit=10`,
-    { headers: { Authorization: `Bearer ${access_token}` } }
-  );
-  const reviews = await revRes.json();
-  res.json(reviews);
+    // 2. Fetch all reviews with pagination
+    const limit = 100;
+    let offset = 0;
+    const aggregated = [];
+    let hasMore = true;
+
+    while (hasMore) {
+      const params = new URLSearchParams({
+        listingId: String(listingId),
+        limit: String(limit),
+        offset: String(offset),
+      });
+
+      const revRes = await fetch(
+        `https://api.hostaway.com/v1/reviews?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      if (!revRes.ok) {
+        const errorPayload = await revRes.text();
+        throw new Error(
+          `Hostaway reviews request failed (${revRes.status}): ${errorPayload}`
+        );
+      }
+
+      const json = await revRes.json();
+      const batch = Array.isArray(json.result) ? json.result : [];
+      aggregated.push(...batch);
+
+      if (batch.length < limit) {
+        hasMore = false;
+      } else {
+        offset += limit;
+      }
+    }
+
+    res.json({
+      status: "success",
+      count: aggregated.length,
+      result: aggregated,
+    });
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 
