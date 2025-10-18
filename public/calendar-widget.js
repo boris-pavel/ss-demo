@@ -98,7 +98,7 @@
       }
 
       if (selected) {
-        cls.push("bg-brand text-white hover:text-white hover:border-brand");
+        cls.push("bg-ink text-white hover:text-white hover:border-ink");
       }
 
       const className = cls.join(" ");
@@ -160,7 +160,7 @@
         dStr >= window.selectedStart &&
         dStr <= window.selectedEnd
       ) {
-        if (d.classList.contains("bg-brand")) {
+        if (d.classList.contains("bg-ink")) {
           d.classList.add("text-white");
         } else {
           d.classList.add("bg-brand/10", "text-brand");
