@@ -1,74 +1,59 @@
-// hero-section.js
 (async function () {
   const listingId = window.LISTING_ID || "97521";
-  const slider = document.getElementById("hero-slider");
-  const titleEl = document.getElementById("hero-title");
-  const descEl = document.getElementById("hero-description");
-
-  if (!slider || !titleEl) return;
+  const mainEl = document.getElementById("hero-main");
+  const thumbsEl = document.getElementById("hero-thumbs");
+  const counterEl = document.getElementById("hero-counter");
 
   try {
-    // Fetch all listings from your backend
     const res = await fetch("https://living-water-backend.onrender.com/listings-debug");
     const data = await res.json();
 
-    // Extract listings
     const listings = data.result || [];
     const listing = listings.find((l) => String(l.id) === String(listingId)) || listings[0];
     if (!listing) throw new Error("Listing not found");
 
-    // Update hero text
-    titleEl.textContent = listing.name || "Listing Title";
-    descEl.textContent = listing.airbnbSummary || listing.description || "Beautiful lakeside retreat";
+    const photos = listing.listingImages?.map((p) => p.url) || [];
 
-    // Collect hero images (Hostaway returns listingImages array)
-    const images = listing.listingImages?.map((img) => img.url).slice(0, 8) || [];
-
-    if (images.length === 0) {
-      slider.innerHTML = `<div class="flex items-center justify-center w-full h-full text-gray-400">
-        No images found.
-      </div>`;
+    if (photos.length === 0) {
+      mainEl.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400">No photos</div>`;
       return;
     }
 
-    // Build slider DOM
-    slider.innerHTML = images
+    // Main hero photo
+    mainEl.innerHTML = `
+      <img src="${photos[0]}" 
+           alt="Main listing image" 
+           class="w-full h-full object-cover rounded-xl">
+    `;
+
+    // Thumbnails (next 4)
+    thumbsEl.innerHTML = photos
+      .slice(1, 5)
       .map(
         (src, i) => `
-          <div class="min-w-full h-full flex-shrink-0 relative">
-            <img src="${src}" 
-                 alt="Listing Image ${i + 1}" 
-                 class="object-cover w-full h-full" 
-                 loading="${i === 0 ? "eager" : "lazy"}">
-          </div>
-        `
+        <div class="relative rounded-xl overflow-hidden">
+          <img src="${src}" alt="Listing image ${i + 1}" class="w-full h-full object-cover">
+        </div>
+      `
       )
       .join("");
 
-    // Slider functionality
-    let index = 0;
-    const slides = slider.children;
-
-    const showSlide = (i) => {
-      index = (i + slides.length) % slides.length;
-      slider.style.transform = `translateX(-${index * 100}%)`;
-    };
-
-    const prev = document.getElementById("prev-btn");
-    const next = document.getElementById("next-btn");
-
-    if (prev && next) {
-      prev.addEventListener("click", () => showSlide(index - 1));
-      next.addEventListener("click", () => showSlide(index + 1));
+    // Add photo counter if more than 5 photos
+    if (photos.length > 5) {
+      const extraCount = photos.length - 5;
+      thumbsEl.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div class="relative rounded-xl overflow-hidden group">
+          <img src="${photos[5]}" class="w-full h-full object-cover opacity-80 group-hover:opacity-60">
+          <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-medium rounded-xl">
+            +${extraCount} photos
+          </div>
+        </div>
+      `
+      );
     }
-
-    // Auto-rotate every 6s
-    setInterval(() => showSlide(index + 1), 6000);
   } catch (err) {
     console.error("Error loading hero section:", err);
-    if (slider)
-      slider.innerHTML = `<div class="flex items-center justify-center w-full h-full text-gray-400">
-        Failed to load hero section.
-      </div>`;
   }
 })();
