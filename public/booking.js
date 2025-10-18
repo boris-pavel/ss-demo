@@ -25,7 +25,10 @@
   // open calendar button - scroll into view
   const openBtn = document.getElementById("open-calendar");
   if (openBtn) openBtn.onclick = () => {
-    document.getElementById("hostaway-calendar")?.scrollIntoView({ behavior: "smooth" });
+    const calendarSection = document.getElementById("availability");
+    if (calendarSection) {
+      calendarSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   // clear dates

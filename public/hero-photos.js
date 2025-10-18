@@ -140,52 +140,38 @@
     const mainImg = mainEl.querySelector("img");
     if (mainImg) mainImg.addEventListener("click", () => openModal(0));
 
-    const thumbMarkup = photos.slice(1, 5).map((src, index) => {
-      const label = captions[index + 1] || `Listing photo ${index + 2}`;
+    const thumbPhotos = photos.slice(1, Math.min(photos.length, 5));
+    const thumbMarkup = thumbPhotos.map((src, index) => {
+      const photoIndex = index + 1;
+      const label = captions[photoIndex] || `Listing photo ${photoIndex + 1}`;
+      const remaining = photos.length - (photoIndex + 1);
+      const showOverlay = remaining > 0 && index === thumbPhotos.length - 1;
+
       return `
-        <div class="relative rounded-2xl overflow-hidden group cursor-pointer min-h-[100px] bg-[#f0f0f0]">
+        <div
+          class="relative rounded-2xl overflow-hidden group cursor-pointer min-h-[100px] bg-[#f0f0f0]"
+          data-photo-index="${photoIndex}"
+        >
           <img
             src="${src}"
             alt="${label}"
             class="h-full w-full object-cover transition duration-200 group-hover:scale-105"
           >
+          ${
+            showOverlay
+              ? `<div class="absolute inset-0 flex items-center justify-center bg-black/45 text-white text-sm font-semibold">+${remaining} photos</div>`
+              : ""
+          }
         </div>
       `;
     });
 
     thumbsEl.innerHTML = thumbMarkup.join("");
 
-    Array.from(thumbsEl.children).forEach((node, index) => {
-      node.addEventListener("click", () => openModal(index + 1));
+    thumbsEl.querySelectorAll("[data-photo-index]").forEach((node) => {
+      const photoIndex = Number(node.getAttribute("data-photo-index"));
+      node.addEventListener("click", () => openModal(photoIndex));
     });
-
-    if (photos.length > 5) {
-      const extraIndex = 5;
-      const extraCount = photos.length - extraIndex;
-      const extraLabel = captions[extraIndex] || `Listing photo ${extraIndex + 1}`;
-      thumbsEl.insertAdjacentHTML(
-        "beforeend",
-        `
-          <div
-            class="relative rounded-2xl overflow-hidden cursor-pointer group min-h-[100px] bg-[#f0f0f0]"
-            id="extra-photo-trigger"
-          >
-            <img
-              src="${photos[extraIndex]}"
-              alt="${extraLabel}"
-              class="h-full w-full object-cover opacity-90 transition duration-200 group-hover:opacity-75"
-            >
-            <div class="absolute inset-0 flex items-center justify-center bg-black/45 text-white text-sm font-semibold">
-              +${extraCount} photos
-            </div>
-          </div>
-        `
-      );
-      const extraBtn = document.getElementById("extra-photo-trigger");
-      if (extraBtn) {
-        extraBtn.addEventListener("click", () => openModal(extraIndex));
-      }
-    }
   } catch (error) {
     console.error("Error loading hero section:", error);
     mainEl.innerHTML =
