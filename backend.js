@@ -333,10 +333,11 @@ app.post("/booking", async (req, res) => {
       guestEmail: email,
       guestPhone: phone,
       notes: notes || message || "",
-      channelId: 0,
-      channel: "Website",
-      status: "new",
+      channelId: 5,
+      source: "Website",
+      status: "new"
     };
+
 
     const reservationRes = await fetch("https://api.hostaway.com/v1/reservations", {
       method: "POST",
