@@ -18,7 +18,7 @@ app.get("/availability", async (req, res) => {
     const { listingId } = req.query;
     if (!listingId) return res.status(400).json({ error: "listingId required" });
 
-    // 1️⃣ Get access token
+    //  Get access token
     const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -34,21 +34,21 @@ app.get("/availability", async (req, res) => {
     const accessToken = tokenData.access_token;
     if (!accessToken) throw new Error("Failed to get access token");
 
-    // 2️⃣ Define date range
+    //  Define date range
     const today = new Date();
     const end = new Date();
     end.setMonth(end.getMonth() + 3);
     const startDate = today.toISOString().split("T")[0];
     const endDate = end.toISOString().split("T")[0];
 
-    // 3️⃣ Request calendar data
+    //  Request calendar data
     const apiUrl = `https://api.hostaway.com/v1/listings/${listingId}/calendar?startDate=${startDate}&endDate=${endDate}`;
     const apiRes = await fetch(apiUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const data = await apiRes.json();
 
-    // 4️⃣ Normalize format
+    //  Normalize format
     const result = {};
     if (Array.isArray(data.result)) {
       data.result.forEach((d) => {
@@ -333,9 +333,11 @@ app.post("/booking", async (req, res) => {
       guestEmail: email,
       guestPhone: phone,
       notes: notes || message || "",
-      channel: "Website",
-      status: "new",
+      channelId: 0,
+      source: "Website",
+      status: "new"
     };
+
 
     const reservationRes = await fetch("https://api.hostaway.com/v1/reservations", {
       method: "POST",
@@ -372,25 +374,6 @@ app.post("/booking", async (req, res) => {
   }
 });
 
-app.get("/channels", async (req, res) => {
-  const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      scope: "general",
-    }),
-  });
-
-  const { access_token } = await tokenRes.json();
-  const chRes = await fetch("https://api.hostaway.com/v1/channels", {
-    headers: { Authorization: `Bearer ${access_token}` },
-  });
-  const json = await chRes.json();
-  res.json(json);
-});
 
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
