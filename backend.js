@@ -325,18 +325,19 @@ app.post("/booking", async (req, res) => {
 
     const reservationPayload = {
       listingId,
-      checkIn: arrivalDate,
-      checkOut: departureDate,
+      checkIn: arrivalDate,      // YYYY-MM-DD
+      checkOut: departureDate,   // YYYY-MM-DD
       numberOfGuests,
       guestFirstName: firstName,
       guestLastName: lastName,
       guestEmail: email,
       guestPhone: phone,
       notes: notes || message || "",
-      channelId: 5,
-      source: "Website",
+      channelId: 2000,           // direct. Switch to 2013 if using Hostaway booking engine
+      source: "Website",         // optional label
       status: "new"
     };
+
 
 
     const reservationRes = await fetch("https://api.hostaway.com/v1/reservations", {
