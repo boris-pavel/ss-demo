@@ -324,7 +324,7 @@ app.post("/booking", async (req, res) => {
     if (!accessToken) throw new Error("Invalid Hostaway access token response");
 
     const reservationPayload = {
-      listingId: 263677, // ensure numeric
+      listingId: Number(listingId), // ensure numeric
       checkIn: arrivalDate,
       checkOut: departureDate,
       numberOfGuests,
@@ -376,6 +376,27 @@ app.post("/booking", async (req, res) => {
   }
 });
 
+
+app.get("/me", async (req, res) => {
+  const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      scope: "general",
+    }),
+  });
+
+  const { access_token } = await tokenRes.json();
+
+  const meRes = await fetch("https://api.hostaway.com/v1/account", {
+    headers: { Authorization: `Bearer ${access_token}` },
+  });
+  const meJson = await meRes.json();
+  res.json(meJson);
+});
 
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
