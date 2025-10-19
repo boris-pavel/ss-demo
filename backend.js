@@ -324,19 +324,20 @@ app.post("/booking", async (req, res) => {
     if (!accessToken) throw new Error("Invalid Hostaway access token response");
 
     const reservationPayload = {
-      listingId,
-      checkIn: arrivalDate,      // YYYY-MM-DD
-      checkOut: departureDate,   // YYYY-MM-DD
+      listingId: Number(listingId), // ensure numeric
+      checkIn: arrivalDate,
+      checkOut: departureDate,
       numberOfGuests,
       guestFirstName: firstName,
       guestLastName: lastName,
       guestEmail: email,
       guestPhone: phone,
       notes: notes || message || "",
-      channelId: 2000,           // direct. Switch to 2013 if using Hostaway booking engine
-      source: "Website",         // optional label
+      channelId: 2000, // direct / website
+      source: "Website",
       status: "new"
     };
+
 
 
 
