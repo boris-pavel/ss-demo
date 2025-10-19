@@ -346,17 +346,24 @@ app.post("/booking", async (req, res) => {
       body: JSON.stringify(reservationPayload),
     });
 
-    const reservationData = await reservationRes.json();
+    const text = await reservationRes.text();
+    let reservationData;
+
+    try {
+      reservationData = JSON.parse(text);
+    } catch {
+      reservationData = {};
+    }
 
     if (!reservationRes.ok) {
-      const text = await reservationRes.text();
-      console.error("Reservation error payload:", text);
-
       throw new Error(
         reservationData?.error ||
-          `Hostaway reservation request failed (${reservationRes.status})`
+        `Hostaway reservation request failed (${reservationRes.status}): ${text}`
       );
     }
+
+    res.status(201).json({ result: reservationData });
+
 
     res.status(201).json({ result: reservationData });
   } catch (error) {
