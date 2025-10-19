@@ -44,44 +44,150 @@
 
   // book now
   const book = document.getElementById("book-now");
-  if (book) book.onclick = async () => {
-    const arrival = window.selectedStart;
-    const departure = window.selectedEnd;
-    if (!arrival || !departure) {
-      alert("Please select arrival and departure dates.");
-      return;
-    }
-    if (!listingId) {
-      alert("Missing listing id.");
-      return;
-    }
+  const modal = document.getElementById("booking-modal");
+  const modalSummary = document.getElementById("booking-modal-summary");
+  const modalStatus = document.getElementById("booking-form-status");
+  const bookingForm = document.getElementById("booking-form");
+  const submitBtn = document.getElementById("booking-submit");
+  const firstNameInput = document.getElementById("booking-first-name");
+  const closeButtons = document.querySelectorAll("[data-close-booking-modal]");
 
-    try {
+  function openModal() {
+    if (!modal) return;
+    modal.classList.remove("hidden", "opacity-0");
+    modal.classList.add("flex");
+    if (firstNameInput) firstNameInput.focus();
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.remove("flex");
+    modal.classList.add("hidden");
+    if (bookingForm) bookingForm.reset();
+    if (modalStatus) {
+      modalStatus.textContent = "";
+      modalStatus.classList.remove("text-green-600", "text-red-600");
+    }
+  }
+
+  closeButtons.forEach((btn) => {
+    btn.addEventListener("click", closeModal);
+  });
+
+  if (modal) {
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeModal();
+    });
+  }
+
+  if (book) {
+    book.onclick = () => {
+      const arrival = window.selectedStart;
+      const departure = window.selectedEnd;
+      if (!arrival || !departure) {
+        alert("Please select arrival and departure dates.");
+        return;
+      }
+      if (!listingId) {
+        alert("Missing listing id.");
+        return;
+      }
+
+      if (modalSummary) {
+        modalSummary.textContent = `Booking ${arrival} to ${departure} for ${guests} guest${guests > 1 ? "s" : ""}.`;
+      }
+
+      openModal();
+    };
+  }
+
+  if (bookingForm) {
+    bookingForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const arrival = window.selectedStart;
+      const departure = window.selectedEnd;
+      if (!arrival || !departure) {
+        alert("Please select arrival and departure dates.");
+        closeModal();
+        return;
+      }
+
+      if (!listingId) {
+        alert("Missing listing id.");
+        closeModal();
+        return;
+      }
+
+      const formData = new FormData(bookingForm);
       const payload = {
         listingId,
         arrivalDate: arrival,
         departureDate: departure,
         guest: {
-          firstName: "Website",
-          lastName: "Guest",
-          email: "guest@example.com",
-          numberOfGuests: guests
-        }
+          firstName: formData.get("firstName") || "",
+          lastName: formData.get("lastName") || "",
+          email: formData.get("email") || "",
+          phone: formData.get("phone") || "",
+          numberOfGuests: guests,
+          notes: formData.get("notes") || "",
+        },
+        message: formData.get("notes") || "",
       };
-      const r = await fetch("https://living-water-backend.onrender.com/reservation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      if (data.result?.id) alert("Reservation created. We will email you shortly.");
-      else {
-        console.log("Reservation error:", data);
-        alert("Could not create reservation. Please try again or use Send inquiry.");
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending...";
       }
-    } catch (e) {
-      console.error(e);
-      alert("Network error. Please try again later.");
+      if (modalStatus) {
+        modalStatus.textContent = "";
+        modalStatus.classList.remove("text-green-600", "text-red-600");
+      }
+
+      try {
+        const response = await fetch("/booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (response.ok && data.result) {
+          if (modalStatus) {
+            modalStatus.textContent = "Reservation received! We'll be in touch shortly.";
+            modalStatus.classList.add("text-green-600");
+          }
+          setTimeout(() => {
+            closeModal();
+          }, 1200);
+        } else {
+          const message =
+            data?.error ||
+            "Could not create reservation. Please try again or use Send inquiry.";
+          if (modalStatus) {
+            modalStatus.textContent = message;
+            modalStatus.classList.add("text-red-600");
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        if (modalStatus) {
+          modalStatus.textContent =
+            "Network error. Please try again later or contact us directly.";
+          modalStatus.classList.add("text-red-600");
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit booking request";
+        }
+      }
+    });
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeModal();
     }
-  };
+  });
 })();

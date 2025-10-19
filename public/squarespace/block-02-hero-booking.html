@@ -116,3 +116,91 @@
     </aside>
   </div>
 </section>
+
+<div
+  id="booking-modal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="relative w-full max-w-xl rounded-[28px] bg-white p-6 shadow-card">
+    <button
+      type="button"
+      class="absolute right-5 top-5 text-muted transition hover:text-ink"
+      aria-label="Close booking form"
+      data-close-booking-modal
+    >&times;</button>
+    <h3 class="text-xl font-semibold text-ink mb-2">Complete your booking</h3>
+    <p id="booking-modal-summary" class="text-sm text-muted mb-5"></p>
+    <form id="booking-form" class="space-y-5">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="text-sm font-medium text-ink">
+          First name
+          <input
+            id="booking-first-name"
+            name="firstName"
+            type="text"
+            required
+            autocomplete="given-name"
+            class="mt-1 w-full rounded-xl border border-[#e4d6c4] bg-white px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
+          >
+        </label>
+        <label class="text-sm font-medium text-ink">
+          Last name
+          <input
+            name="lastName"
+            type="text"
+            required
+            autocomplete="family-name"
+            class="mt-1 w-full rounded-xl border border-[#e4d6c4] bg-white px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
+          >
+        </label>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="text-sm font-medium text-ink">
+          Email
+          <input
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            class="mt-1 w-full rounded-xl border border-[#e4d6c4] bg-white px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
+          >
+        </label>
+        <label class="text-sm font-medium text-ink">
+          Phone (optional)
+          <input
+            name="phone"
+            type="tel"
+            autocomplete="tel"
+            class="mt-1 w-full rounded-xl border border-[#e4d6c4] bg-white px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
+          >
+        </label>
+      </div>
+      <label class="text-sm font-medium text-ink block">
+        Notes or special requests
+        <textarea
+          name="notes"
+          rows="4"
+          class="mt-1 w-full rounded-xl border border-[#e4d6c4] bg-white px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/50"
+          placeholder="Tell us who is traveling, celebration details, or other helpful info."
+        ></textarea>
+      </label>
+      <p id="booking-form-status" class="text-sm font-medium"></p>
+      <div class="flex flex-wrap items-center justify-end gap-3">
+        <button
+          type="button"
+          class="rounded-full border border-muted px-4 py-2 text-sm font-medium text-muted hover:text-ink hover:border-ink transition"
+          data-close-booking-modal
+        >Cancel</button>
+        <button
+          id="booking-submit"
+          type="submit"
+          class="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand/90 disabled:opacity-60"
+        >
+          Submit booking request
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -6,6 +6,7 @@ import cors from "cors";
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
+app.use(express.json());
 const PORT = 3000;
 
 // replace with your credentials (keep them secret here)
@@ -268,4 +269,98 @@ app.get("/amenities", async (req, res) => {
 
 
 
+app.post("/booking", async (req, res) => {
+  try {
+    const {
+      listingId,
+      arrivalDate,
+      departureDate,
+      guest = {},
+      message,
+    } = req.body || {};
+
+    if (!listingId) {
+      return res.status(400).json({ error: "listingId required" });
+    }
+
+    if (!arrivalDate || !departureDate) {
+      return res
+        .status(400)
+        .json({ error: "arrivalDate and departureDate required" });
+    }
+
+    const {
+      firstName = "",
+      lastName = "",
+      email = "",
+      phone = "",
+      numberOfGuests = 1,
+      notes = "",
+    } = guest;
+
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({
+        error: "guest.firstName, guest.lastName and guest.email are required",
+      });
+    }
+
+    const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: CLIENT_ID,
+        client_secret: CLIENT_SECRET,
+        scope: "general",
+      }),
+    });
+
+    if (!tokenRes.ok) {
+      const text = await tokenRes.text();
+      throw new Error(`Failed to obtain access token (${tokenRes.status}): ${text}`);
+    }
+
+    const { access_token: accessToken } = await tokenRes.json();
+    if (!accessToken) throw new Error("Invalid Hostaway access token response");
+
+    const reservationPayload = {
+      listingId,
+      checkIn: arrivalDate,
+      checkOut: departureDate,
+      numberOfGuests,
+      guestFirstName: firstName,
+      guestLastName: lastName,
+      guestEmail: email,
+      guestPhone: phone,
+      notes: notes || message || "",
+      channel: "Website",
+      status: "new",
+    };
+
+    const reservationRes = await fetch("https://api.hostaway.com/v1/reservations", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reservationPayload),
+    });
+
+    const reservationData = await reservationRes.json();
+
+    if (!reservationRes.ok) {
+      throw new Error(
+        reservationData?.error ||
+          `Hostaway reservation request failed (${reservationRes.status})`
+      );
+    }
+
+    res.status(201).json({ result: reservationData });
+  } catch (error) {
+    console.error("Error creating reservation:", error);
+    res.status(500).json({ error: error.message || "Unknown error" });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
