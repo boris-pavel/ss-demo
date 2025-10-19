@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 
@@ -349,6 +349,9 @@ app.post("/booking", async (req, res) => {
     const reservationData = await reservationRes.json();
 
     if (!reservationRes.ok) {
+      const text = await reservationRes.text();
+      console.error("Reservation error payload:", text);
+
       throw new Error(
         reservationData?.error ||
           `Hostaway reservation request failed (${reservationRes.status})`
