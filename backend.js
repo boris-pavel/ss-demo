@@ -324,7 +324,7 @@ app.post("/booking", async (req, res) => {
     if (!accessToken) throw new Error("Invalid Hostaway access token response");
 
     const reservationPayload = {
-      listingId: Number(listingId), // ensure numeric
+      listingId: 263677, // ensure numeric
       checkIn: arrivalDate,
       checkOut: departureDate,
       numberOfGuests,
