@@ -372,5 +372,26 @@ app.post("/booking", async (req, res) => {
   }
 });
 
+app.get("/channels", async (req, res) => {
+  const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      scope: "general",
+    }),
+  });
+
+  const { access_token } = await tokenRes.json();
+  const chRes = await fetch("https://api.hostaway.com/v1/channels", {
+    headers: { Authorization: `Bearer ${access_token}` },
+  });
+  const json = await chRes.json();
+  res.json(json);
+});
+
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
