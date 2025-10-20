@@ -323,11 +323,20 @@ app.post("/booking", async (req, res) => {
     const { access_token: accessToken } = await tokenRes.json();
     if (!accessToken) throw new Error("Invalid Hostaway access token response");
 
+    const listingNumericId = Number(listingId);
+    if (!Number.isFinite(listingNumericId)) {
+      return res.status(400).json({ error: "listingId must be a number" });
+    }
+
+    const guestName = `${firstName} ${lastName}`.trim();
+
     const reservationPayload = {
-      listingId: Number(listingId), // ensure numeric
+      listingId: listingNumericId, // Hostaway still accepts listingId
+      listingMapId: listingNumericId, // Required for reservation creation (Hostaway API expects listingMapId)
       checkIn: arrivalDate,
       checkOut: departureDate,
       numberOfGuests,
+      guestName,
       guestFirstName: firstName,
       guestLastName: lastName,
       guestEmail: email,
@@ -335,7 +344,7 @@ app.post("/booking", async (req, res) => {
       notes: notes || message || "",
       channelId: 2000, // direct / website
       source: "Website",
-      status: "new"
+      status: "new",
     };
 
 
@@ -365,9 +374,6 @@ app.post("/booking", async (req, res) => {
         `Hostaway reservation request failed (${reservationRes.status}): ${text}`
       );
     }
-
-    res.status(201).json({ result: reservationData });
-
 
     res.status(201).json({ result: reservationData });
   } catch (error) {
