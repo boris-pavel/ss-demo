@@ -141,7 +141,7 @@
 
       const formData = new FormData(bookingForm);
       const payload = {
-        listingId,
+        listingId: Number(listingId),
         arrivalDate: arrival,
         departureDate: departure,
         guest: {
