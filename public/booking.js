@@ -138,8 +138,8 @@
       const formData = new FormData(bookingForm);
       const payload = {
         listingId,
-        checkIn: arrival,
-        checkOut: departure,
+        arrivalDate: arrival,
+        departureDate: departure,
         numberOfGuests: guests,
         guestFirstName: formData.get("firstName") || "",
         guestLastName: formData.get("lastName") || "",
