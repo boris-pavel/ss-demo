@@ -370,21 +370,35 @@ app.post("/booking", async (req, res) => {
 
     const guestName = `${firstName} ${lastName}`.trim();
 
+    const totalGuests = Number.isFinite(Number(numberOfGuests))
+      ? Number(numberOfGuests)
+      : 1;
+
     const reservationPayload = {
-      listingId: listingNumericId, // Hostaway still accepts listingId
-      listingMapId, // Hostaway requires listingMapId to identify the property
-      checkIn: arrivalISO,
-      checkOut: departureISO,
-      numberOfGuests,
+      listingId: listingNumericId,
+      listingMapId,
+      channelId: 2000, // direct / website
+      source: "Website",
+      status: "new",
+      isManuallyChecked: 0,
+      isInitial: 0,
       guestName,
       guestFirstName: firstName,
       guestLastName: lastName,
       guestEmail: email,
       guestPhone: phone,
+      numberOfGuests: totalGuests,
+      adults: totalGuests,
+      children: null,
+      infants: null,
+      pets: null,
+      arrivalDate: arrivalISO,
+      departureDate: departureISO,
+      checkIn: arrivalISO,
+      checkOut: departureISO,
       notes: notes || message || "",
-      channelId: 2000, // direct / website
-      source: "Website",
-      status: "new",
+      guestNote: notes || message || "",
+      currency: "USD",
     };
 
 
