@@ -22,14 +22,33 @@
     dec.onclick = () => { guests = Math.max(1, guests - 1); label.textContent = String(guests); };
   }
 
-  // open calendar button - scroll into view
-  const openBtn = document.getElementById("open-calendar");
-  if (openBtn) openBtn.onclick = () => {
-    const calendarSection = document.getElementById("availability");
-    if (calendarSection) {
-      calendarSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  // calendar modal
+  const calendarModal = document.getElementById("calendar-modal");
+  const calendarTriggers = document.querySelectorAll("[data-open-calendar]");
+  const calendarCloseButtons = document.querySelectorAll("[data-close-calendar-modal]");
+
+  function openCalendarModal() {
+    if (!calendarModal) return;
+    calendarModal.classList.remove("hidden", "opacity-0");
+    calendarModal.classList.add("flex");
+    const focusTarget = calendarModal.querySelector("button:not([data-close-calendar-modal])");
+    if (focusTarget) focusTarget.focus();
+  }
+
+  function closeCalendarModal() {
+    if (!calendarModal) return;
+    calendarModal.classList.remove("flex");
+    calendarModal.classList.add("hidden");
+  }
+
+  calendarTriggers.forEach((btn) => btn.addEventListener("click", openCalendarModal));
+  calendarCloseButtons.forEach((btn) => btn.addEventListener("click", closeCalendarModal));
+
+  if (calendarModal) {
+    calendarModal.addEventListener("click", (event) => {
+      if (event.target === calendarModal) closeCalendarModal();
+    });
+  }
 
   // clear dates
   const clearBtn = document.getElementById("clear-dates");
@@ -82,6 +101,7 @@
 
   if (book) {
     book.onclick = () => {
+      closeCalendarModal();
       const arrival = window.selectedStart;
       const departure = window.selectedEnd;
       if (!arrival || !departure) {
@@ -188,6 +208,7 @@
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       closeModal();
+      closeCalendarModal();
     }
   });
 })();
