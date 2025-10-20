@@ -343,11 +343,36 @@ app.post("/booking", async (req, res) => {
       return res.status(400).json({ error: "listingId must be a number" });
     }
 
+    let listingMapId = listingNumericId;
+    try {
+      const listingRes = await fetch(
+        `https://api.hostaway.com/v1/listings/${listingNumericId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      if (listingRes.ok) {
+        const listingJson = await listingRes.json();
+        const listingResult = listingJson?.result || listingJson?.listing;
+        listingMapId =
+          listingResult?.listing?.listingMapId ??
+          listingResult?.listingMapId ??
+          listingResult?.listing?.id ??
+          listingNumericId;
+      } else {
+        console.warn(
+          `Failed to fetch listing details (${listingRes.status}): ${await listingRes.text()}`
+        );
+      }
+    } catch (err) {
+      console.warn("Unable to load listing details for reservation:", err);
+    }
+
     const guestName = `${firstName} ${lastName}`.trim();
 
     const reservationPayload = {
       listingId: listingNumericId, // Hostaway still accepts listingId
-      listingMapId: listingNumericId, // Required for reservation creation (Hostaway API expects listingMapId)
+      listingMapId, // Hostaway requires listingMapId to identify the property
       checkIn: arrivalISO,
       checkOut: departureISO,
       numberOfGuests,
