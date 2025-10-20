@@ -2,7 +2,7 @@
   const listingId = window.LISTING_ID ? Number(window.LISTING_ID) : null;
   let guests = 1;
 
-  // expose hooks used by the calendar widget
+  // expose hooks for calendar widget
   window._booking = {
     setDatesLabel(arrival, departure) {
       const el = document.getElementById("selected-dates-label");
@@ -61,7 +61,7 @@
     );
   };
 
-  // book now
+  // modal controls
   const book = document.getElementById("book-now");
   const modal = document.getElementById("booking-modal");
   const modalSummary = document.getElementById("booking-modal-summary");
@@ -89,10 +89,7 @@
     }
   }
 
-  closeButtons.forEach((btn) => {
-    btn.addEventListener("click", closeModal);
-  });
-
+  closeButtons.forEach((btn) => btn.addEventListener("click", closeModal));
   if (modal) {
     modal.addEventListener("click", (event) => {
       if (event.target === modal) closeModal();
@@ -132,7 +129,6 @@
         closeModal();
         return;
       }
-
       if (!listingId) {
         alert("Missing listing id.");
         closeModal();
@@ -142,17 +138,17 @@
       const formData = new FormData(bookingForm);
       const payload = {
         listingId,
-        arrivalDate: arrival,
-        departureDate: departure,
-        guest: {
-          firstName: formData.get("firstName") || "",
-          lastName: formData.get("lastName") || "",
-          email: formData.get("email") || "",
-          phone: formData.get("phone") || "",
-          numberOfGuests: guests,
-          notes: formData.get("notes") || "",
-        },
-        message: formData.get("notes") || "",
+        checkIn: arrival,
+        checkOut: departure,
+        numberOfGuests: guests,
+        guestFirstName: formData.get("firstName") || "",
+        guestLastName: formData.get("lastName") || "",
+        guestEmail: formData.get("email") || "",
+        guestPhone: formData.get("phone") || "",
+        notes: formData.get("notes") || "",
+        channelId: 0,
+        channel: "Website",
+        status: "new"
       };
 
       if (submitBtn) {
@@ -168,34 +164,23 @@
         const response = await fetch("https://living-water-backend.onrender.com/booking", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(payload)
         });
         const data = await response.json();
 
         if (response.ok && data.result) {
-          if (modalStatus) {
-            modalStatus.textContent = "Reservation received! We'll be in touch shortly.";
-            modalStatus.classList.add("text-green-600");
-          }
-          setTimeout(() => {
-            closeModal();
-          }, 1200);
+          modalStatus.textContent = "Reservation received! We'll be in touch shortly.";
+          modalStatus.classList.add("text-green-600");
+          setTimeout(closeModal, 1200);
         } else {
-          const message =
-            data?.error ||
-            "Could not create reservation. Please try again or use Send inquiry.";
-          if (modalStatus) {
-            modalStatus.textContent = message;
-            modalStatus.classList.add("text-red-600");
-          }
+          const message = data?.error || "Could not create reservation. Please try again or use Send inquiry.";
+          modalStatus.textContent = message;
+          modalStatus.classList.add("text-red-600");
         }
       } catch (error) {
         console.error(error);
-        if (modalStatus) {
-          modalStatus.textContent =
-            "Network error. Please try again later or contact us directly.";
-          modalStatus.classList.add("text-red-600");
-        }
+        modalStatus.textContent = "Network error. Please try again later or contact us directly.";
+        modalStatus.classList.add("text-red-600");
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

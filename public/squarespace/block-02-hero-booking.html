@@ -63,7 +63,8 @@
       </div>
       <div class="space-y-4">
         <button
-          id="open-calendar"
+          type="button"
+          data-open-calendar
           class="w-full rounded-full border border-brand/40 bg-white px-5 py-3 text-sm font-semibold text-ink hover:bg-brand/10 transition"
         >
           Select Dates
@@ -116,6 +117,48 @@
     </aside>
   </div>
 </section>
+
+<div
+  id="calendar-modal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="calendar-modal-title"
+>
+  <div class="relative w-full max-w-4xl rounded-[28px] bg-white p-6 sm:p-8 shadow-card">
+    <button
+      type="button"
+      class="absolute right-5 top-5 text-muted transition hover:text-ink"
+      aria-label="Close calendar"
+      data-close-calendar-modal
+    >&times;</button>
+    <div id="availability" class="space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 id="calendar-modal-title" class="text-xl font-semibold text-ink">Select your stay dates</h3>
+          <p class="text-sm text-muted">Choose check-in and check-out dates to see availability.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            id="prev-month"
+            class="h-10 w-10 rounded-full border border-brand/30 text-brand hover:bg-brand/10 transition"
+            type="button"
+          >&lsaquo;</button>
+          <button
+            id="next-month"
+            class="h-10 w-10 rounded-full border border-brand/30 text-brand hover:bg-brand/10 transition"
+            type="button"
+          >&rsaquo;</button>
+        </div>
+      </div>
+      <div>
+        <p id="calendar-title" class="text-base font-semibold text-ink mb-4"></p>
+        <div id="calendar-container" class="w-full overflow-x-auto pb-2"></div>
+      </div>
+      <p class="text-xs text-muted">Tip: select a start date to see eligible departure days.</p>
+    </div>
+  </div>
+</div>
 
 <div
   id="booking-modal"
