@@ -304,6 +304,21 @@ app.post("/booking", async (req, res) => {
       });
     }
 
+    const arrival = new Date(arrivalDate);
+    const departure = new Date(departureDate);
+    if (
+      Number.isNaN(arrival.valueOf()) ||
+      Number.isNaN(departure.valueOf()) ||
+      arrival >= departure
+    ) {
+      return res.status(400).json({
+        error: "Invalid stay dates. Check-in must be before check-out.",
+      });
+    }
+
+    const arrivalISO = arrival.toISOString().split("T")[0];
+    const departureISO = departure.toISOString().split("T")[0];
+
     const tokenRes = await fetch("https://api.hostaway.com/v1/accessTokens", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -333,8 +348,8 @@ app.post("/booking", async (req, res) => {
     const reservationPayload = {
       listingId: listingNumericId, // Hostaway still accepts listingId
       listingMapId: listingNumericId, // Required for reservation creation (Hostaway API expects listingMapId)
-      checkIn: arrivalDate,
-      checkOut: departureDate,
+      checkIn: arrivalISO,
+      checkOut: departureISO,
       numberOfGuests,
       guestName,
       guestFirstName: firstName,
